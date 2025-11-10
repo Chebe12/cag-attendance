@@ -6,7 +6,7 @@
 @section('subheading', 'Enter your employee number and password')
 
 @section('content')
-<form method="POST" action="{{ route('login') }}" class="space-y-6" x-data="{ loading: false }">
+<form method="POST" action="{{ route('login') }}" class="space-y-6" x-data="{ loading: false }" @submit="loading = true">
     @csrf
 
     <!-- Employee Number -->
@@ -96,7 +96,6 @@
     <!-- Submit Button -->
     <div>
         <button type="submit"
-                @click="loading = true"
                 :disabled="loading"
                 class="w-full flex justify-center items-center py-2.5 px-4 border border-transparent rounded-lg shadow-sm text-sm font-medium text-white bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 focus:outline-none focus:ring-2 focus:ring-offset-2 focus:ring-green-500 transition-all duration-200 disabled:opacity-50 disabled:cursor-not-allowed transform hover:scale-[1.02] active:scale-[0.98]">
             <span x-show="!loading">Sign in</span>
