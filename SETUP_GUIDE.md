@@ -4,24 +4,59 @@
 
 ### Login Issue Resolved
 The infinite loading problem on login was caused by:
-1. **Field name mismatch** - Login form used `employee_number` but controller expected `employee_no`
-2. **Missing authentication configuration** - User model needed `username()` method to specify custom auth field
-3. **Route configuration** - Attendance mark route needed to be GET instead of POST
+1. **Login form bug** - Loading state was triggered on button click instead of form submit, causing it to stick when validation failed
+2. **Database connection** - MySQL service needs to be running (was not started)
+3. **Field name consistency** - Ensured `employee_no` is used throughout
+4. **Vite removal** - Removed npm/build dependencies as requested
 
 All issues have been fixed and committed to your repository.
 
 ## 🚀 Quick Setup Instructions
 
-### 1. Database Setup
+### 1. Start MySQL Service (IMPORTANT!)
+
+The login issue was caused by MySQL not running. Start it first:
 
 ```bash
-# Create MySQL database
-mysql -u root -p
-CREATE DATABASE cag_attendance;
-exit;
+# Ubuntu/Debian
+sudo systemctl start mysql
+# or
+sudo service mysql start
+
+# MacOS
+brew services start mysql
+
+# Windows
+net start MySQL
+
+# Verify MySQL is running
+mysqladmin -u root -p ping
 ```
 
-### 2. Configure Environment
+### 2. Run Automated Database Setup (Recommended)
+
+We've provided a setup script that handles everything:
+
+```bash
+chmod +x setup-database.sh
+./setup-database.sh
+```
+
+**OR** Follow Manual Setup:
+
+### 3. Manual Database Setup
+
+```bash
+# 1. Create MySQL database
+mysql -u root -p
+CREATE DATABASE cag_attendance CHARACTER SET utf8mb4 COLLATE utf8mb4_unicode_ci;
+exit;
+
+# 2. Run migrations and seeders
+php artisan migrate:fresh --seed
+```
+
+### 4. Configure Environment
 
 The `.env` file is already configured with:
 - **DB_CONNECTION**: mysql
@@ -31,23 +66,18 @@ The `.env` file is already configured with:
 
 If you have a database password, edit `.env` and set `DB_PASSWORD`.
 
-### 3. Run Migrations and Seeders
+### 5. Verify Database Setup
 
-```bash
-# Run all migrations to create tables
-php artisan migrate --seed
-```
-
-This will create:
-- ✅ All database tables
-- ✅ 1 Admin user (admin@caglobal.com / admin123)
+After running the setup script or manual setup, you should have:
+- ✅ All database tables (users, clients, shifts, schedules, qr_codes, etc.)
+- ✅ 1 Admin user (EMP001 / admin123)
 - ✅ 5 Instructors
 - ✅ 3 Office Staff
 - ✅ 10 Sample Clients
 - ✅ 3 Shifts (Morning, Mid-Morning, Afternoon)
 - ✅ 3 QR Codes
 
-### 4. Set Permissions
+### 6. Set Permissions
 
 ```bash
 # Set storage permissions
@@ -122,6 +152,48 @@ Visit: **http://localhost:8000**
 - [ ] Check attendance in history
 
 ## 🐛 Common Issues & Solutions
+
+### Issue: Login Keeps Loading Forever
+**Root Cause:** MySQL service is not running (Connection refused error)
+
+**Solution:**
+```bash
+# 1. Start MySQL service
+sudo systemctl start mysql
+# or
+sudo service mysql start
+
+# 2. Verify MySQL is running
+mysqladmin -u root ping
+
+# 3. Clear Laravel cache
+php artisan config:clear
+php artisan cache:clear
+
+# 4. Test database connection
+php artisan db:show
+```
+
+**If MySQL won't start:**
+- Check if MySQL is installed: `mysql --version`
+- Check MySQL logs: `sudo tail -f /var/log/mysql/error.log`
+- Reinstall if needed: `sudo apt-get install --reinstall mysql-server`
+
+### Issue: Database Connection Refused
+**Symptoms:** Login button shows "Signing in..." forever, Laravel.log shows "Connection refused"
+
+**Solution:**
+1. Ensure MySQL is running (see above)
+2. Check `.env` database credentials:
+   ```
+   DB_CONNECTION=mysql
+   DB_HOST=127.0.0.1
+   DB_PORT=3306
+   DB_DATABASE=cag_attendance
+   DB_USERNAME=root
+   DB_PASSWORD=
+   ```
+3. Test connection: `php artisan db:show`
 
 ### Issue: Migration Errors
 **Solution:**
