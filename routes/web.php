@@ -20,6 +20,16 @@ use App\Http\Controllers\Staff\AttendanceController;
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.store');
 
+// Register route (stub - redirect to login for now)
+Route::get('/register', function () {
+    return redirect()->route('login')->with('info', 'Registration is currently managed by administrators.');
+})->name('register');
+
+// Password reset route (stub - redirect to login for now)
+Route::get('/password/reset', function () {
+    return redirect()->route('login')->with('info', 'Please contact your administrator for password reset assistance.');
+})->name('password.request');
+
 // Welcome page - Redirect to appropriate location
 Route::get('/', function () {
     if (auth()->check()) {
@@ -49,6 +59,15 @@ Route::middleware('auth')->group(function () {
 
     // Logout route
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
+
+    // Profile and Settings (stub routes - redirect to dashboard for now)
+    Route::get('/profile', function () {
+        return redirect()->route('dashboard');
+    })->name('profile.edit');
+
+    Route::get('/settings', function () {
+        return redirect()->route('dashboard');
+    })->name('settings');
 
 });
 
@@ -118,9 +137,17 @@ Route::middleware(['auth', 'check.user.type:instructor,office_staff'])->prefix('
         Route::post('/scan', [AttendanceController::class, 'scan'])->name('scan');
         Route::post('/check-in', [AttendanceController::class, 'checkIn'])->name('check-in');
         Route::post('/check-out', [AttendanceController::class, 'checkOut'])->name('check-out');
+        Route::post('/manual', [AttendanceController::class, 'checkIn'])->name('manual');
+        Route::post('/process', [AttendanceController::class, 'scan'])->name('process');
+        Route::get('/export', [AttendanceController::class, 'export'])->name('export');
     });
 
-    // My Schedule
+    // Schedules (My Schedule)
+    Route::prefix('schedules')->name('schedules.')->group(function () {
+        Route::get('/', [AttendanceController::class, 'mySchedule'])->name('index');
+    });
+
+    // Legacy route - keep for backward compatibility
     Route::get('/schedule', [AttendanceController::class, 'mySchedule'])->name('my-schedule');
 
     // My Clients (Instructors only)

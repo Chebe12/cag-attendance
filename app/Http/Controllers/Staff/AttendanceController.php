@@ -542,6 +542,64 @@ class AttendanceController extends Controller
     }
 
     /**
+     * Export attendance records to PDF or Excel
+     *
+     * Allows staff to export their attendance history in various formats
+     * Respects the same filters as the index view
+     *
+     * @param Request $request
+     * @return \Illuminate\Http\Response
+     */
+    public function export(Request $request)
+    {
+        $user = Auth::user();
+        $format = $request->input('format', 'pdf');
+
+        // Build query for user's attendance records with same filters as index
+        $query = Attendance::where('user_id', $user->id)
+            ->with(['schedule.client', 'schedule.shift', 'qrCode']);
+
+        // Apply same filters as index method
+        if ($request->filled('from_date')) {
+            $query->whereDate('attendance_date', '>=', $request->from_date);
+        }
+
+        if ($request->filled('to_date')) {
+            $query->whereDate('attendance_date', '<=', $request->to_date);
+        }
+
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        }
+
+        if ($request->filled('month')) {
+            $date = Carbon::parse($request->month);
+            $query->whereYear('attendance_date', $date->year)
+                  ->whereMonth('attendance_date', $date->month);
+        }
+
+        $attendances = $query->latest('attendance_date')
+            ->latest('check_in')
+            ->get();
+
+        // For now, return a simple response
+        // TODO: Implement proper PDF/Excel export using libraries like dompdf or maatwebsite/excel
+        if ($format === 'pdf') {
+            return response()->json([
+                'message' => 'PDF export functionality will be implemented soon.',
+                'count' => $attendances->count(),
+            ]);
+        } elseif ($format === 'excel') {
+            return response()->json([
+                'message' => 'Excel export functionality will be implemented soon.',
+                'count' => $attendances->count(),
+            ]);
+        }
+
+        return back()->with('error', 'Invalid export format.');
+    }
+
+    /**
      * Process check-in and create attendance record
      *
      * Helper method to handle check-in logic, determine status (present/late),
