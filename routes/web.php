@@ -9,6 +9,7 @@ use App\Http\Controllers\Admin\ShiftController;
 use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\QrCodeController;
 use App\Http\Controllers\Admin\ReportController;
+use App\Http\Controllers\Admin\AttendanceController as AdminAttendanceController;
 use App\Http\Controllers\Staff\DashboardController as StaffDashboardController;
 use App\Http\Controllers\Staff\AttendanceController;
 
@@ -72,6 +73,13 @@ Route::middleware(['auth', 'check.user.type:admin'])->prefix('admin')->name('adm
     // Schedules Management (CRUD)
     Route::resource('schedules', ScheduleController::class);
 
+    // Attendance Management (View only for admin)
+    Route::prefix('attendance')->name('attendance.')->group(function () {
+        Route::get('/', [AdminAttendanceController::class, 'index'])->name('index');
+        Route::get('/{attendance}', [AdminAttendanceController::class, 'show'])->name('show');
+        Route::delete('/{attendance}', [AdminAttendanceController::class, 'destroy'])->name('destroy');
+    });
+
     // QR Codes Management
     Route::prefix('qr-codes')->name('qr-codes.')->group(function () {
         Route::get('/', [QrCodeController::class, 'index'])->name('index');
@@ -79,6 +87,8 @@ Route::middleware(['auth', 'check.user.type:admin'])->prefix('admin')->name('adm
         Route::post('/', [QrCodeController::class, 'store'])->name('store');
         Route::get('/{qrCode}/download', [QrCodeController::class, 'download'])->name('download');
         Route::post('/{qrCode}/generate', [QrCodeController::class, 'generate'])->name('generate');
+        Route::post('/{qrCode}/activate', [QrCodeController::class, 'activate'])->name('activate');
+        Route::post('/{qrCode}/deactivate', [QrCodeController::class, 'deactivate'])->name('deactivate');
         Route::get('/{qrCode}', [QrCodeController::class, 'show'])->name('show');
     });
 

@@ -274,6 +274,36 @@ class QrCodeController extends Controller
     }
 
     /**
+     * Activate a QR code
+     *
+     * @param  \App\Models\QrCode  $qrCode
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function activate(QrCode $qrCode)
+    {
+        $qrCode->update(['is_active' => true]);
+
+        return redirect()
+            ->back()
+            ->with('success', 'QR code activated successfully.');
+    }
+
+    /**
+     * Deactivate a QR code
+     *
+     * @param  \App\Models\QrCode  $qrCode
+     * @return \Illuminate\Http\RedirectResponse
+     */
+    public function deactivate(QrCode $qrCode)
+    {
+        $qrCode->update(['is_active' => false]);
+
+        return redirect()
+            ->back()
+            ->with('success', 'QR code deactivated successfully.');
+    }
+
+    /**
      * Generate a unique QR code.
      *
      * @return string
