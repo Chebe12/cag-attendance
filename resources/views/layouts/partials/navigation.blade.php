@@ -28,6 +28,14 @@
         Clients
     </a>
 
+    <a href="{{ route('admin.departments.index') }}"
+       class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all {{ str_starts_with($currentRoute, 'admin.departments') ? 'bg-green-700 text-white shadow-lg' : 'text-green-100 hover:bg-green-700/50 hover:text-white' }}">
+        <svg class="mr-3 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
+        </svg>
+        Departments
+    </a>
+
     <a href="{{ route('admin.schedules.index') }}"
        class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all {{ str_starts_with($currentRoute, 'admin.schedules') ? 'bg-green-700 text-white shadow-lg' : 'text-green-100 hover:bg-green-700/50 hover:text-white' }}">
         <svg class="mr-3 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
