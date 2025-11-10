@@ -68,7 +68,7 @@ class QrCodeController extends Controller
         // Validate the request
         $validated = $request->validate([
             'code' => 'nullable|string|max:255|unique:qr_codes,code',
-            'type' => 'required|string|in:check_in,check_out,both',
+            'type' => 'required|string|in:daily,weekly,permanent',
             'valid_from' => 'nullable|date',
             'valid_until' => 'nullable|date|after_or_equal:valid_from',
             'is_active' => 'boolean',
@@ -136,7 +136,7 @@ class QrCodeController extends Controller
         // Validate the request
         $validated = $request->validate([
             'code' => 'nullable|string|max:255|unique:qr_codes,code,' . $qrCode->id,
-            'type' => 'required|string|in:check_in,check_out,both',
+            'type' => 'required|string|in:daily,weekly,permanent',
             'valid_from' => 'nullable|date',
             'valid_until' => 'nullable|date|after_or_equal:valid_from',
             'is_active' => 'boolean',
