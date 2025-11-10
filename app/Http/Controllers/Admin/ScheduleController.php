@@ -121,11 +121,12 @@ class ScheduleController extends Controller
             'user_id' => 'required|exists:users,id',
             'client_id' => 'required|exists:clients,id',
             'shift_id' => 'required|exists:shifts,id',
-            'scheduled_date' => 'required|date|after_or_equal:today',
+            'is_recurring' => 'boolean',
+            'scheduled_date' => 'nullable|date|after_or_equal:today|required_if:is_recurring,false',
+            'day_of_week' => 'nullable|string|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday|required_if:is_recurring,true',
+            'session_time' => 'nullable|string|in:morning,mid-morning,afternoon',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
-            'day_of_week' => 'nullable|integer|between:0,6',
-            'is_recurring' => 'boolean',
             'status' => 'required|string|in:scheduled,completed,cancelled,rescheduled',
             'notes' => 'nullable|string|max:1000',
         ], [
@@ -135,36 +136,41 @@ class ScheduleController extends Controller
             'client_id.exists' => 'The selected client does not exist.',
             'shift_id.required' => 'Please select a shift.',
             'shift_id.exists' => 'The selected shift does not exist.',
-            'scheduled_date.required' => 'Scheduled date is required.',
+            'scheduled_date.required_if' => 'Scheduled date is required for non-recurring schedules.',
             'scheduled_date.after_or_equal' => 'Scheduled date must be today or in the future.',
+            'day_of_week.required_if' => 'Day of week is required for recurring schedules.',
+            'day_of_week.in' => 'Invalid day of week selected.',
+            'session_time.in' => 'Invalid session time selected.',
             'start_time.required' => 'Start time is required.',
             'end_time.required' => 'End time is required.',
             'end_time.after' => 'End time must be after start time.',
             'status.in' => 'Invalid status selected.',
         ]);
 
-        // Calculate day of week if not provided
-        if (empty($validated['day_of_week'])) {
-            $validated['day_of_week'] = Carbon::parse($validated['scheduled_date'])->dayOfWeek;
+        // Calculate day of week from scheduled_date if not recurring
+        if (!$request->is_recurring && !empty($validated['scheduled_date'])) {
+            $validated['day_of_week'] = strtolower(Carbon::parse($validated['scheduled_date'])->format('l'));
         }
 
         // Set created_by to authenticated admin
         $validated['created_by'] = auth()->id();
         $validated['is_recurring'] = $request->has('is_recurring') ? true : false;
 
-        // Check for scheduling conflicts
-        $conflict = $this->checkSchedulingConflict(
-            $validated['user_id'],
-            $validated['scheduled_date'],
-            $validated['start_time'],
-            $validated['end_time']
-        );
+        // Check for scheduling conflicts (only for non-recurring schedules)
+        if (!$validated['is_recurring'] && !empty($validated['scheduled_date'])) {
+            $conflict = $this->checkSchedulingConflict(
+                $validated['user_id'],
+                $validated['scheduled_date'],
+                $validated['start_time'],
+                $validated['end_time']
+            );
 
-        if ($conflict) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('warning', 'Warning: This user already has a schedule at this time: ' . $conflict->client->name);
+            if ($conflict) {
+                return redirect()
+                    ->back()
+                    ->withInput()
+                    ->with('warning', 'Warning: This user already has a schedule at this time: ' . $conflict->client->name);
+            }
         }
 
         // Create the schedule
@@ -220,11 +226,12 @@ class ScheduleController extends Controller
             'user_id' => 'required|exists:users,id',
             'client_id' => 'required|exists:clients,id',
             'shift_id' => 'required|exists:shifts,id',
-            'scheduled_date' => 'required|date',
+            'is_recurring' => 'boolean',
+            'scheduled_date' => 'nullable|date|required_if:is_recurring,false',
+            'day_of_week' => 'nullable|string|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday|required_if:is_recurring,true',
+            'session_time' => 'nullable|string|in:morning,mid-morning,afternoon',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
-            'day_of_week' => 'nullable|integer|between:0,6',
-            'is_recurring' => 'boolean',
             'status' => 'required|string|in:scheduled,completed,cancelled,rescheduled',
             'notes' => 'nullable|string|max:1000',
         ], [
@@ -234,34 +241,39 @@ class ScheduleController extends Controller
             'client_id.exists' => 'The selected client does not exist.',
             'shift_id.required' => 'Please select a shift.',
             'shift_id.exists' => 'The selected shift does not exist.',
-            'scheduled_date.required' => 'Scheduled date is required.',
+            'scheduled_date.required_if' => 'Scheduled date is required for non-recurring schedules.',
+            'day_of_week.required_if' => 'Day of week is required for recurring schedules.',
+            'day_of_week.in' => 'Invalid day of week selected.',
+            'session_time.in' => 'Invalid session time selected.',
             'start_time.required' => 'Start time is required.',
             'end_time.required' => 'End time is required.',
             'end_time.after' => 'End time must be after start time.',
             'status.in' => 'Invalid status selected.',
         ]);
 
-        // Calculate day of week if not provided
-        if (empty($validated['day_of_week'])) {
-            $validated['day_of_week'] = Carbon::parse($validated['scheduled_date'])->dayOfWeek;
+        // Calculate day of week from scheduled_date if not recurring
+        if (!$request->is_recurring && !empty($validated['scheduled_date'])) {
+            $validated['day_of_week'] = strtolower(Carbon::parse($validated['scheduled_date'])->format('l'));
         }
 
         $validated['is_recurring'] = $request->has('is_recurring') ? true : false;
 
-        // Check for scheduling conflicts (excluding current schedule)
-        $conflict = $this->checkSchedulingConflict(
-            $validated['user_id'],
-            $validated['scheduled_date'],
-            $validated['start_time'],
-            $validated['end_time'],
-            $schedule->id
-        );
+        // Check for scheduling conflicts (only for non-recurring schedules, excluding current schedule)
+        if (!$validated['is_recurring'] && !empty($validated['scheduled_date'])) {
+            $conflict = $this->checkSchedulingConflict(
+                $validated['user_id'],
+                $validated['scheduled_date'],
+                $validated['start_time'],
+                $validated['end_time'],
+                $schedule->id
+            );
 
-        if ($conflict) {
-            return redirect()
-                ->back()
-                ->withInput()
-                ->with('warning', 'Warning: This user already has a schedule at this time: ' . $conflict->client->name);
+            if ($conflict) {
+                return redirect()
+                    ->back()
+                    ->withInput()
+                    ->with('warning', 'Warning: This user already has a schedule at this time: ' . $conflict->client->name);
+            }
         }
 
         // Update the schedule
