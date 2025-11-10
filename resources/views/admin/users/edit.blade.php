@@ -65,23 +65,56 @@
                         Personal Information
                     </h3>
 
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Full Name -->
+                    <div class="grid grid-cols-1 md:grid-cols-3 gap-6">
+                        <!-- First Name -->
                         <div>
-                            <label for="name" class="block text-sm font-medium text-gray-700 mb-2">
-                                Full Name <span class="text-red-500">*</span>
+                            <label for="firstname" class="block text-sm font-medium text-gray-700 mb-2">
+                                First Name <span class="text-red-500">*</span>
                             </label>
                             <input type="text"
-                                   name="name"
-                                   id="name"
-                                   value="{{ old('name', $user->name) }}"
+                                   name="firstname"
+                                   id="firstname"
+                                   value="{{ old('firstname', $user->firstname) }}"
                                    required
-                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('name') border-red-500 @enderror">
-                            @error('name')
+                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('firstname') border-red-500 @enderror">
+                            @error('firstname')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
 
+                        <!-- Middle Name -->
+                        <div>
+                            <label for="middlename" class="block text-sm font-medium text-gray-700 mb-2">
+                                Middle Name
+                            </label>
+                            <input type="text"
+                                   name="middlename"
+                                   id="middlename"
+                                   value="{{ old('middlename', $user->middlename) }}"
+                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('middlename') border-red-500 @enderror">
+                            @error('middlename')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Last Name -->
+                        <div>
+                            <label for="lastname" class="block text-sm font-medium text-gray-700 mb-2">
+                                Last Name <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text"
+                                   name="lastname"
+                                   id="lastname"
+                                   value="{{ old('lastname', $user->lastname) }}"
+                                   required
+                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('lastname') border-red-500 @enderror">
+                            @error('lastname')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+                    </div>
+
+                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6 mt-6">
                         <!-- Email -->
                         <div>
                             <label for="email" class="block text-sm font-medium text-gray-700 mb-2">
@@ -98,18 +131,19 @@
                             @enderror
                         </div>
 
-                        <!-- Employee ID -->
+                        <!-- Employee Number -->
                         <div>
-                            <label for="employee_id" class="block text-sm font-medium text-gray-700 mb-2">
-                                Employee ID <span class="text-red-500">*</span>
+                            <label for="employee_no" class="block text-sm font-medium text-gray-700 mb-2">
+                                Employee Number <span class="text-red-500">*</span>
                             </label>
                             <input type="text"
-                                   name="employee_id"
-                                   id="employee_id"
-                                   value="{{ old('employee_id', $user->employee_id) }}"
+                                   name="employee_no"
+                                   id="employee_no"
+                                   value="{{ old('employee_no', $user->employee_no) }}"
                                    required
-                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('employee_id') border-red-500 @enderror">
-                            @error('employee_id')
+                                   placeholder="e.g., EMP001"
+                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('employee_no') border-red-500 @enderror">
+                            @error('employee_no')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
@@ -128,6 +162,23 @@
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
+
+                        <!-- Position -->
+                        <div>
+                            <label for="position" class="block text-sm font-medium text-gray-700 mb-2">
+                                Position/Title <span class="text-red-500">*</span>
+                            </label>
+                            <input type="text"
+                                   name="position"
+                                   id="position"
+                                   value="{{ old('position', $user->position) }}"
+                                   required
+                                   placeholder="e.g., Senior Instructor"
+                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('position') border-red-500 @enderror">
+                            @error('position')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
                     </div>
                 </div>
 
@@ -142,21 +193,41 @@
                     </h3>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Role -->
+                        <!-- User Type -->
                         <div>
-                            <label for="role" class="block text-sm font-medium text-gray-700 mb-2">
-                                Role <span class="text-red-500">*</span>
+                            <label for="user_type" class="block text-sm font-medium text-gray-700 mb-2">
+                                User Type <span class="text-red-500">*</span>
                             </label>
-                            <select name="role"
-                                    id="role"
+                            <select name="user_type"
+                                    id="user_type"
                                     required
-                                    class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('role') border-red-500 @enderror">
-                                <option value="">Select Role</option>
-                                <option value="admin" {{ old('role', $user->role) === 'admin' ? 'selected' : '' }}>Admin</option>
-                                <option value="manager" {{ old('role', $user->role) === 'manager' ? 'selected' : '' }}>Manager</option>
-                                <option value="staff" {{ old('role', $user->role) === 'staff' ? 'selected' : '' }}>Staff</option>
+                                    class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('user_type') border-red-500 @enderror">
+                                <option value="">Select User Type</option>
+                                <option value="admin" {{ old('user_type', $user->user_type) === 'admin' ? 'selected' : '' }}>Admin</option>
+                                <option value="instructor" {{ old('user_type', $user->user_type) === 'instructor' ? 'selected' : '' }}>Instructor</option>
+                                <option value="office_staff" {{ old('user_type', $user->user_type) === 'office_staff' ? 'selected' : '' }}>Office Staff</option>
                             </select>
-                            @error('role')
+                            @error('user_type')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Department -->
+                        <div>
+                            <label for="department_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                Department
+                            </label>
+                            <select name="department_id"
+                                    id="department_id"
+                                    class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('department_id') border-red-500 @enderror">
+                                <option value="">Select Department</option>
+                                @foreach($departments as $dept)
+                                    <option value="{{ $dept->id }}" {{ old('department_id', $user->department_id) == $dept->id ? 'selected' : '' }}>
+                                        {{ $dept->name }}
+                                    </option>
+                                @endforeach
+                            </select>
+                            @error('department_id')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
@@ -172,10 +243,29 @@
                                     class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('status') border-red-500 @enderror">
                                 <option value="active" {{ old('status', $user->status ?? 'active') === 'active' ? 'selected' : '' }}>Active</option>
                                 <option value="inactive" {{ old('status', $user->status ?? 'active') === 'inactive' ? 'selected' : '' }}>Inactive</option>
+                                <option value="suspended" {{ old('status', $user->status ?? 'active') === 'suspended' ? 'selected' : '' }}>Suspended</option>
                             </select>
                             @error('status')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
+                        </div>
+
+                        <!-- Avatar -->
+                        <div>
+                            <label for="avatar" class="block text-sm font-medium text-gray-700 mb-2">
+                                Profile Photo
+                            </label>
+                            <input type="file"
+                                   name="avatar"
+                                   id="avatar"
+                                   accept="image/*"
+                                   class="block w-full text-sm text-gray-500 file:mr-4 file:py-2 file:px-4 file:rounded-lg file:border-0 file:text-sm file:font-semibold file:bg-green-50 file:text-green-700 hover:file:bg-green-100">
+                            @error('avatar')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                            @if($user->avatar)
+                                <p class="mt-1 text-xs text-gray-500">Current photo will be replaced if new file is uploaded</p>
+                            @endif
                         </div>
 
                         <!-- Password -->
@@ -203,7 +293,7 @@
                             @error('password')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
-                            <p class="mt-1 text-xs text-gray-500">Leave blank to keep current password</p>
+                            <p class="mt-1 text-xs text-gray-500">Leave blank to keep current password (Minimum 8 characters if changing)</p>
                         </div>
 
                         <!-- Confirm Password -->
@@ -228,48 +318,6 @@
                                     </svg>
                                 </button>
                             </div>
-                        </div>
-                    </div>
-                </div>
-
-                <!-- Additional Information -->
-                <div class="border-t border-gray-200 pt-6">
-                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
-                        <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
-                        </svg>
-                        Additional Information
-                    </h3>
-
-                    <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
-                        <!-- Department -->
-                        <div>
-                            <label for="department" class="block text-sm font-medium text-gray-700 mb-2">
-                                Department
-                            </label>
-                            <input type="text"
-                                   name="department"
-                                   id="department"
-                                   value="{{ old('department', $user->department) }}"
-                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('department') border-red-500 @enderror">
-                            @error('department')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <!-- Position -->
-                        <div>
-                            <label for="position" class="block text-sm font-medium text-gray-700 mb-2">
-                                Position
-                            </label>
-                            <input type="text"
-                                   name="position"
-                                   id="position"
-                                   value="{{ old('position', $user->position) }}"
-                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('position') border-red-500 @enderror">
-                            @error('position')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
                         </div>
                     </div>
                 </div>

@@ -108,9 +108,13 @@ Route::middleware(['auth', 'check.user.type:admin'])->prefix('admin')->name('adm
         Route::get('/create', [QrCodeController::class, 'create'])->name('create');
         Route::post('/', [QrCodeController::class, 'store'])->name('store');
         Route::get('/{qrCode}/download', [QrCodeController::class, 'download'])->name('download');
+        Route::get('/{qrCode}/print', [QrCodeController::class, 'print'])->name('print');
         Route::post('/{qrCode}/generate', [QrCodeController::class, 'generate'])->name('generate');
         Route::post('/{qrCode}/activate', [QrCodeController::class, 'activate'])->name('activate');
         Route::post('/{qrCode}/deactivate', [QrCodeController::class, 'deactivate'])->name('deactivate');
+        Route::get('/{qrCode}/edit', [QrCodeController::class, 'edit'])->name('edit');
+        Route::put('/{qrCode}', [QrCodeController::class, 'update'])->name('update');
+        Route::delete('/{qrCode}', [QrCodeController::class, 'destroy'])->name('destroy');
         Route::get('/{qrCode}', [QrCodeController::class, 'show'])->name('show');
     });
 

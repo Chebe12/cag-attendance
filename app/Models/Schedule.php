@@ -18,6 +18,7 @@ class Schedule extends Model
         'start_time',
         'end_time',
         'day_of_week',
+        'session_time',
         'is_recurring',
         'status',
         'notes',
