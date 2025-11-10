@@ -29,8 +29,8 @@ class AuthController extends Controller
     /**
      * Handle user login
      *
-     * Validates employee_no and password, logs in the user,
-     * and redirects to the appropriate dashboard based on user type
+     * Validates login credentials (employee_no or email) and password,
+     * logs in the user, and redirects to the appropriate dashboard based on user type
      *
      * @param Request $request
      * @return \Illuminate\Http\RedirectResponse
@@ -39,16 +39,19 @@ class AuthController extends Controller
     {
         // Validate the input fields
         $validated = $request->validate([
-            'employee_no' => 'required|string',
+            'login' => 'required|string',
             'password' => 'required|string|min:6',
         ], [
-            'employee_no.required' => 'Employee number is required.',
+            'login.required' => 'Employee number or email is required.',
             'password.required' => 'Password is required.',
             'password.min' => 'Password must be at least 6 characters.',
         ]);
 
-        // Attempt to authenticate the user using employee_no and password
-        if (Auth::attempt(['employee_no' => $validated['employee_no'], 'password' => $validated['password']])) {
+        // Determine if the login is an email or employee number
+        $loginField = filter_var($validated['login'], FILTER_VALIDATE_EMAIL) ? 'email' : 'employee_no';
+
+        // Attempt to authenticate the user
+        if (Auth::attempt([$loginField => $validated['login'], 'password' => $validated['password']])) {
             // Authentication successful
             $request->session()->regenerate();
 
@@ -64,8 +67,8 @@ class AuthController extends Controller
 
         // Authentication failed - redirect back with error
         return back()
-            ->withInput($request->only('employee_no'))
-            ->withErrors(['login' => 'Invalid employee number or password.']);
+            ->withInput($request->only('login'))
+            ->withErrors(['login' => 'Invalid credentials. Please check your employee number/email and password.']);
     }
 
     /**

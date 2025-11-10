@@ -3,16 +3,16 @@
 @section('title', 'Login')
 
 @section('heading', 'Sign in to your account')
-@section('subheading', 'Enter your employee number and password')
+@section('subheading', 'Enter your employee ID or email and password')
 
 @section('content')
 <form method="POST" action="{{ route('login') }}" class="space-y-6" x-data="{ loading: false }" @submit="loading = true">
     @csrf
 
-    <!-- Employee Number -->
+    <!-- Employee Number or Email -->
     <div>
-        <label for="employee_no" class="block text-sm font-medium text-gray-700">
-            Employee Number
+        <label for="login" class="block text-sm font-medium text-gray-700">
+            Employee ID or Email
         </label>
         <div class="mt-1 relative">
             <div class="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
@@ -20,18 +20,15 @@
                     <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M16 7a4 4 0 11-8 0 4 4 0 018 0zM12 14a7 7 0 00-7 7h14a7 7 0 00-7-7z"/>
                 </svg>
             </div>
-            <input id="employee_no"
-                   name="employee_no"
+            <input id="login"
+                   name="login"
                    type="text"
                    autocomplete="username"
                    required
-                   value="{{ old('employee_no') }}"
-                   class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors @error('employee_no') border-red-300 focus:ring-red-500 @enderror"
-                   placeholder="Enter your employee number">
+                   value="{{ old('login') }}"
+                   class="block w-full pl-10 pr-3 py-2.5 border border-gray-300 rounded-lg text-gray-900 placeholder-gray-400 focus:outline-none focus:ring-2 focus:ring-green-500 focus:border-transparent transition-colors @error('login') border-red-300 focus:ring-red-500 @enderror"
+                   placeholder="Enter your employee ID or email">
         </div>
-        @error('employee_no')
-            <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-        @enderror
         @error('login')
             <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
         @enderror

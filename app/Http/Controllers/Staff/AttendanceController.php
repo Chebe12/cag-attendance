@@ -109,7 +109,7 @@ class AttendanceController extends Controller
     /**
      * Show QR scanning page for attendance marking
      *
-     * Displays the QR code scanner interface with today's schedule
+     * Displays the QR code scanner interface with today's schedules
      * and current attendance status
      *
      * @return \Illuminate\View\View
@@ -118,28 +118,25 @@ class AttendanceController extends Controller
     {
         $user = Auth::user();
 
-        // Get today's schedule for the user
-        $todaySchedule = Schedule::where('user_id', $user->id)
+        // Get ALL today's schedules for the user (can have multiple client visits)
+        $todaySchedules = Schedule::where('user_id', $user->id)
             ->today()
             ->with(['client', 'shift'])
-            ->first();
+            ->orderBy('start_time')
+            ->get();
 
-        // Check if user has already checked in today
-        $todayAttendance = Attendance::where('user_id', $user->id)
+        // Get all today's attendance records
+        $todayAttendances = Attendance::where('user_id', $user->id)
             ->today()
-            ->first();
+            ->with(['client', 'schedule'])
+            ->get();
 
-        // Determine current status (not checked in, checked in, checked out)
-        $status = 'not_checked_in';
-        if ($todayAttendance) {
-            if ($todayAttendance->check_out) {
-                $status = 'checked_out';
-            } else {
-                $status = 'checked_in';
-            }
-        }
+        // Determine which schedules still need attendance
+        $pendingSchedules = $todaySchedules->filter(function($schedule) use ($todayAttendances) {
+            return !$todayAttendances->where('schedule_id', $schedule->id)->where('check_out', '!=', null)->count();
+        });
 
-        return view('staff.attendance.mark', compact('todaySchedule', 'todayAttendance', 'status'));
+        return view('staff.attendance.mark', compact('todaySchedules', 'todayAttendances', 'pendingSchedules'));
     }
 
     /**
@@ -157,6 +154,8 @@ class AttendanceController extends Controller
             // Validate the request
             $validated = $request->validate([
                 'qr_code' => 'required|string',
+                'schedule_id' => 'nullable|exists:schedules,id', // Which client visit
+                'attendance_type' => 'required|in:office,client_visit',
                 'latitude' => 'nullable|numeric',
                 'longitude' => 'nullable|numeric',
                 'photo' => 'nullable|string', // Base64 encoded photo
@@ -192,29 +191,67 @@ class AttendanceController extends Controller
                 ]);
             }
 
-            // Check if user has already checked in today
-            $todayAttendance = Attendance::where('user_id', $user->id)
-                ->today()
-                ->first();
-
             DB::beginTransaction();
 
             try {
-                if (!$todayAttendance) {
-                    // First scan of the day - Check In
-                    $todayAttendance = $this->processCheckIn($user, $qrCode, $ipAddress, $location, $validated['photo'] ?? null);
-                    $action = 'check_in';
-                    $message = 'Successfully checked in!';
-                } elseif (!$todayAttendance->check_out) {
-                    // Already checked in - Check Out
-                    $this->processCheckOut($todayAttendance, $ipAddress, $location, $validated['photo'] ?? null);
-                    $action = 'check_out';
-                    $message = 'Successfully checked out!';
+                $attendance = null;
+                $action = '';
+                $message = '';
+
+                if ($validated['attendance_type'] === 'client_visit' && !empty($validated['schedule_id'])) {
+                    // Client visit - find or create attendance for this specific client
+                    $schedule = Schedule::find($validated['schedule_id']);
+
+                    if (!$schedule || $schedule->user_id !== $user->id) {
+                        throw ValidationException::withMessages([
+                            'schedule_id' => ['Invalid schedule selected.']
+                        ]);
+                    }
+
+                    // Find existing attendance for this schedule today
+                    $attendance = Attendance::where('user_id', $user->id)
+                        ->where('schedule_id', $schedule->id)
+                        ->where('client_id', $schedule->client_id)
+                        ->today()
+                        ->first();
+
+                    if (!$attendance) {
+                        // Check in to client location
+                        $attendance = $this->processCheckIn($user, $qrCode, $ipAddress, $location, $validated['photo'] ?? null, null, $schedule);
+                        $action = 'check_in';
+                        $message = 'Checked in at ' . $schedule->client->name;
+                    } elseif (!$attendance->check_out) {
+                        // Check out from client location
+                        $this->processCheckOut($attendance, $ipAddress, $location, $validated['photo'] ?? null);
+                        $action = 'check_out';
+                        $message = 'Checked out from ' . $schedule->client->name;
+                    } else {
+                        throw ValidationException::withMessages([
+                            'qr_code' => ['You have already completed attendance for this client today.']
+                        ]);
+                    }
                 } else {
-                    // Already checked out today
-                    throw ValidationException::withMessages([
-                        'qr_code' => ['You have already completed your attendance for today.']
-                    ]);
+                    // Office attendance - single check-in/out for the day
+                    $attendance = Attendance::where('user_id', $user->id)
+                        ->where('attendance_type', 'office')
+                        ->today()
+                        ->first();
+
+                    if (!$attendance) {
+                        // Check in to office
+                        $attendance = $this->processCheckIn($user, $qrCode, $ipAddress, $location, $validated['photo'] ?? null, null, null, 'office');
+                        $action = 'check_in';
+                        $message = 'Checked in at office';
+                    } elseif (!$attendance->check_out) {
+                        // Check out from office
+                        $this->processCheckOut($attendance, $ipAddress, $location, $validated['photo'] ?? null);
+                        $action = 'check_out';
+                        $message = 'Checked out from office';
+                    } else {
+                        throw ValidationException::withMessages([
+                            'qr_code' => ['You have already completed your office attendance for today.']
+                        ]);
+                    }
                 }
 
                 // Increment QR code scan count
@@ -222,7 +259,7 @@ class AttendanceController extends Controller
 
                 // Log the attendance action
                 $this->logAttendanceAction(
-                    $todayAttendance,
+                    $attendance,
                     $user,
                     $action,
                     $ipAddress,
@@ -234,7 +271,7 @@ class AttendanceController extends Controller
                 return response()->json([
                     'success' => true,
                     'message' => $message,
-                    'attendance' => $todayAttendance->load(['schedule.client', 'schedule.shift']),
+                    'attendance' => $attendance->load(['schedule.client', 'client', 'schedule.shift']),
                     'action' => $action,
                 ]);
 
@@ -611,17 +648,21 @@ class AttendanceController extends Controller
      * @param string|null $location
      * @param string|null $photo
      * @param string|null $notes
+     * @param \App\Models\Schedule|null $schedule
+     * @param string $attendanceType
      * @return \App\Models\Attendance
      */
-    private function processCheckIn($user, $qrCode, $ipAddress, $location, $photo = null, $notes = null)
+    private function processCheckIn($user, $qrCode, $ipAddress, $location, $photo = null, $notes = null, $schedule = null, $attendanceType = 'client_visit')
     {
         $now = now();
         $today = $now->toDateString();
 
-        // Get today's schedule for the user
-        $schedule = Schedule::where('user_id', $user->id)
-            ->whereDate('scheduled_date', $today)
-            ->first();
+        // If no schedule provided and it's a client visit, get today's schedule
+        if (!$schedule && $attendanceType === 'client_visit') {
+            $schedule = Schedule::where('user_id', $user->id)
+                ->whereDate('scheduled_date', $today)
+                ->first();
+        }
 
         // Determine status (present or late)
         $status = 'present';
@@ -649,6 +690,8 @@ class AttendanceController extends Controller
             'qr_code_id' => $qrCode?->id,
             'schedule_id' => $schedule?->id,
             'shift_id' => $schedule?->shift_id,
+            'client_id' => $schedule?->client_id,
+            'attendance_type' => $attendanceType,
             'attendance_date' => $today,
             'check_in' => $now,
             'check_in_location' => $location,

@@ -20,7 +20,8 @@ class User extends Authenticatable
         'password',
         'phone',
         'avatar',
-        'department',
+        'department', // Legacy field - kept for backward compatibility
+        'department_id', // New foreign key to departments table
         'position',
         'user_type',
         'status',
@@ -74,6 +75,11 @@ class User extends Authenticatable
     }
 
     // Relationships
+    public function department()
+    {
+        return $this->belongsTo(Department::class);
+    }
+
     public function attendances()
     {
         return $this->hasMany(Attendance::class);
@@ -97,6 +103,11 @@ class User extends Authenticatable
     public function createdQrCodes()
     {
         return $this->hasMany(QrCode::class, 'created_by');
+    }
+
+    public function headedDepartment()
+    {
+        return $this->hasOne(Department::class, 'head_of_department');
     }
 
     // Scope for active users
