@@ -19,9 +19,12 @@ use App\Http\Controllers\Staff\AttendanceController;
 Route::get('/login', [AuthController::class, 'showLoginForm'])->name('login');
 Route::post('/login', [AuthController::class, 'login'])->name('login.store');
 
-// Welcome page
+// Welcome page - Redirect to appropriate location
 Route::get('/', function () {
-    return view('welcome');
+    if (auth()->check()) {
+        return redirect()->route('dashboard');
+    }
+    return redirect()->route('login');
 })->name('home');
 
 // ============================================================================
@@ -101,7 +104,7 @@ Route::middleware(['auth', 'check.user.type:instructor,office_staff'])->prefix('
     // Attendance Management
     Route::prefix('attendance')->name('attendance.')->group(function () {
         Route::get('/', [AttendanceController::class, 'index'])->name('index');
-        Route::post('/mark', [AttendanceController::class, 'mark'])->name('mark');
+        Route::get('/mark', [AttendanceController::class, 'mark'])->name('mark');
         Route::post('/scan', [AttendanceController::class, 'scan'])->name('scan');
         Route::post('/check-in', [AttendanceController::class, 'checkIn'])->name('check-in');
         Route::post('/check-out', [AttendanceController::class, 'checkOut'])->name('check-out');

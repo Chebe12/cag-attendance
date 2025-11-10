@@ -39,6 +39,16 @@ class User extends Authenticatable
         ];
     }
 
+    /**
+     * Get the name of the unique identifier for the user.
+     *
+     * @return string
+     */
+    public function username()
+    {
+        return 'employee_no';
+    }
+
     // Accessor for full name
     public function getFullNameAttribute()
     {
