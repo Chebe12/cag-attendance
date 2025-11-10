@@ -139,9 +139,9 @@ sudo chown -R www-data:www-data storage bootstrap/cache
 ### Issue: Assets Not Loading
 **Solution:**
 ```bash
-npm run build
 php artisan optimize:clear
 ```
+**Note:** This system uses CDN-based libraries (Tailwind CSS, Alpine.js, Chart.js) - no npm build required!
 
 ### Issue: QR Scanner Not Working
 **Solutions:**
@@ -264,7 +264,6 @@ If you encounter any issues:
 2. **Check browser console** for JavaScript errors
 3. **Verify database connection** in `.env`
 4. **Clear all caches** with `php artisan optimize:clear`
-5. **Rebuild assets** with `npm run build`
 
 ## 🎉 You're All Set!
 
