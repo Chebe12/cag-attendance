@@ -14,7 +14,9 @@ class Attendance extends Model
         'qr_code_id',
         'schedule_id',
         'shift_id',
+        'client_id',
         'attendance_date',
+        'attendance_type',
         'check_in',
         'check_out',
         'check_in_location',
@@ -52,6 +54,11 @@ class Attendance extends Model
     public function shift()
     {
         return $this->belongsTo(Shift::class);
+    }
+
+    public function client()
+    {
+        return $this->belongsTo(Client::class);
     }
 
     public function logs()

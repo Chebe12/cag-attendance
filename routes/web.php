@@ -92,6 +92,9 @@ Route::middleware(['auth', 'check.user.type:admin'])->prefix('admin')->name('adm
     // Schedules Management (CRUD)
     Route::resource('schedules', ScheduleController::class);
 
+    // Departments Management (CRUD)
+    Route::resource('departments', \App\Http\Controllers\Admin\DepartmentController::class);
+
     // Attendance Management (View only for admin)
     Route::prefix('attendance')->name('attendance.')->group(function () {
         Route::get('/', [AdminAttendanceController::class, 'index'])->name('index');
