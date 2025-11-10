@@ -159,25 +159,25 @@
                             <div class="flex items-center">
                                 <div class="flex-shrink-0 h-10 w-10">
                                     <div class="h-10 w-10 rounded-full bg-gradient-to-br from-green-400 to-orange-500 flex items-center justify-center text-white font-semibold">
-                                        {{ substr($user->name, 0, 1) }}
+                                        {{ substr($user->full_name, 0, 1) }}
                                     </div>
                                 </div>
                                 <div class="ml-4">
-                                    <div class="text-sm font-medium text-gray-900">{{ $user->name }}</div>
+                                    <div class="text-sm font-medium text-gray-900">{{ $user->full_name }}</div>
                                     <div class="text-sm text-gray-500">{{ $user->email }}</div>
                                 </div>
                             </div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
-                            <div class="text-sm text-gray-900">{{ $user->employee_id ?? 'N/A' }}</div>
+                            <div class="text-sm text-gray-900">{{ $user->employee_no ?? 'N/A' }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
-                                @if($user->role === 'admin') bg-purple-100 text-purple-800
-                                @elseif($user->role === 'manager') bg-blue-100 text-blue-800
+                                @if($user->user_type === 'admin') bg-purple-100 text-purple-800
+                                @elseif($user->user_type === 'instructor') bg-blue-100 text-blue-800
                                 @else bg-green-100 text-green-800
                                 @endif">
-                                {{ ucfirst($user->role) }}
+                                {{ ucfirst(str_replace('_', ' ', $user->user_type)) }}
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">

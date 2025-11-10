@@ -70,7 +70,8 @@ class UserController extends Controller
      */
     public function create()
     {
-        return view('admin.users.create');
+        $departments = \App\Models\Department::active()->orderBy('name')->get();
+        return view('admin.users.create', compact('departments'));
     }
 
     /**
@@ -92,7 +93,8 @@ class UserController extends Controller
             'password' => 'required|string|min:8|confirmed',
             'phone' => 'nullable|string|max:20',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'department' => 'required|string|max:100',
+            'department_id' => 'nullable|exists:departments,id',
+            'department' => 'nullable|string|max:100', // Legacy field
             'position' => 'required|string|max:100',
             'user_type' => 'required|string|in:admin,instructor,office_staff',
             'status' => 'required|string|in:active,inactive,suspended',
@@ -104,6 +106,7 @@ class UserController extends Controller
             'password.min' => 'Password must be at least 8 characters.',
             'user_type.in' => 'Invalid user type selected.',
             'status.in' => 'Invalid status selected.',
+            'department_id.exists' => 'Selected department does not exist.',
         ]);
 
         // Hash the password
@@ -163,7 +166,8 @@ class UserController extends Controller
      */
     public function edit(User $user)
     {
-        return view('admin.users.edit', compact('user'));
+        $departments = \App\Models\Department::active()->orderBy('name')->get();
+        return view('admin.users.edit', compact('user', 'departments'));
     }
 
     /**
@@ -196,7 +200,8 @@ class UserController extends Controller
             'password' => 'nullable|string|min:8|confirmed',
             'phone' => 'nullable|string|max:20',
             'avatar' => 'nullable|image|mimes:jpeg,png,jpg,gif|max:2048',
-            'department' => 'required|string|max:100',
+            'department_id' => 'nullable|exists:departments,id',
+            'department' => 'nullable|string|max:100', // Legacy field
             'position' => 'required|string|max:100',
             'user_type' => 'required|string|in:admin,instructor,office_staff',
             'status' => 'required|string|in:active,inactive,suspended',
@@ -208,6 +213,7 @@ class UserController extends Controller
             'password.min' => 'Password must be at least 8 characters.',
             'user_type.in' => 'Invalid user type selected.',
             'status.in' => 'Invalid status selected.',
+            'department_id.exists' => 'Selected department does not exist.',
         ]);
 
         // Hash the password only if provided

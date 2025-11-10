@@ -43,7 +43,7 @@ class QrCodeController extends Controller
         // Order by latest first
         $qrCodes = $query->latest()->paginate(15)->withQueryString();
 
-        return view('admin.qrcodes.index', compact('qrCodes'));
+        return view('admin.qr-codes.index', compact('qrCodes'));
     }
 
     /**
@@ -53,7 +53,7 @@ class QrCodeController extends Controller
      */
     public function create()
     {
-        return view('admin.qrcodes.create');
+        return view('admin.qr-codes.create');
     }
 
     /**
@@ -93,7 +93,7 @@ class QrCodeController extends Controller
         $qrCode = QrCode::create($validated);
 
         return redirect()
-            ->route('admin.qrcodes.show', $qrCode)
+            ->route('admin.qr-codes.show', $qrCode)
             ->with('success', 'QR code created successfully. You can now generate the QR code image.');
     }
 
@@ -110,7 +110,7 @@ class QrCodeController extends Controller
             $query->latest()->take(10);
         }]);
 
-        return view('admin.qrcodes.show', compact('qrCode'));
+        return view('admin.qr-codes.show', compact('qrCode'));
     }
 
     /**
@@ -121,7 +121,7 @@ class QrCodeController extends Controller
      */
     public function edit(QrCode $qrCode)
     {
-        return view('admin.qrcodes.edit', compact('qrCode'));
+        return view('admin.qr-codes.edit', compact('qrCode'));
     }
 
     /**
@@ -153,7 +153,7 @@ class QrCodeController extends Controller
         $qrCode->update($validated);
 
         return redirect()
-            ->route('admin.qrcodes.show', $qrCode)
+            ->route('admin.qr-codes.show', $qrCode)
             ->with('success', 'QR code updated successfully.');
     }
 
@@ -174,7 +174,7 @@ class QrCodeController extends Controller
         $qrCode->delete();
 
         return redirect()
-            ->route('admin.qrcodes.index')
+            ->route('admin.qr-codes.index')
             ->with('success', 'QR code deleted successfully.');
     }
 
@@ -216,12 +216,12 @@ class QrCodeController extends Controller
             ]);
 
             return redirect()
-                ->route('admin.qrcodes.show', $qrCode)
+                ->route('admin.qr-codes.show', $qrCode)
                 ->with('success', 'QR code image generated successfully.');
 
         } catch (\Exception $e) {
             return redirect()
-                ->route('admin.qrcodes.show', $qrCode)
+                ->route('admin.qr-codes.show', $qrCode)
                 ->with('error', 'Failed to generate QR code image: ' . $e->getMessage());
         }
     }
@@ -268,7 +268,7 @@ class QrCodeController extends Controller
 
         } catch (\Exception $e) {
             return redirect()
-                ->route('admin.qrcodes.show', $qrCode)
+                ->route('admin.qr-codes.show', $qrCode)
                 ->with('error', 'Failed to download QR code: ' . $e->getMessage());
         }
     }
