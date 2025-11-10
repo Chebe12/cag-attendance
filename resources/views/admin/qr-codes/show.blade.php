@@ -291,10 +291,10 @@ document.addEventListener('DOMContentLoaded', function() {
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: @json($usageData['labels'] ?? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']),
+                labels: {!! json_encode($usageData['labels'] ?? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']) !!},
                 datasets: [{
                     label: 'Scans',
-                    data: @json($usageData['data'] ?? [2, 5, 3, 7, 4, 6, 8]),
+                    data: {!! json_encode($usageData['data'] ?? [2, 5, 3, 7, 4, 6, 8]) !!},
                     borderColor: 'rgb(34, 197, 94)',
                     backgroundColor: 'rgba(34, 197, 94, 0.1)',
                     borderWidth: 2,

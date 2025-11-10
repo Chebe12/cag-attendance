@@ -272,10 +272,10 @@ document.addEventListener('DOMContentLoaded', function() {
         new Chart(ctx, {
             type: 'line',
             data: {
-                labels: @json($chartData['labels'] ?? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']),
+                labels: {!! json_encode($chartData['labels'] ?? ['Mon', 'Tue', 'Wed', 'Thu', 'Fri', 'Sat', 'Sun']) !!},
                 datasets: [{
                     label: 'Attendance',
-                    data: @json($chartData['data'] ?? [12, 19, 15, 17, 14, 16, 18]),
+                    data: {!! json_encode($chartData['data'] ?? [12, 19, 15, 17, 14, 16, 18]) !!},
                     borderColor: 'rgb(34, 197, 94)',
                     backgroundColor: 'rgba(34, 197, 94, 0.1)',
                     borderWidth: 2,
