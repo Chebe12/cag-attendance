@@ -3,7 +3,7 @@
 @endphp
 
 <!-- Admin Navigation -->
-@if(auth()->user()->role === 'admin')
+@if(auth()->user()->user_type === 'admin')
     <a href="{{ route('admin.dashboard') }}"
        class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all {{ str_starts_with($currentRoute, 'admin.dashboard') ? 'bg-green-700 text-white shadow-lg' : 'text-green-100 hover:bg-green-700/50 hover:text-white' }}">
         <svg class="mr-3 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
