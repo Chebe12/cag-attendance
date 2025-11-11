@@ -16,7 +16,7 @@
         <svg class="h-5 w-5 text-gray-300 mx-2" fill="currentColor" viewBox="0 0 20 20">
             <path fill-rule="evenodd" d="M7.293 14.707a1 1 0 010-1.414L10.586 10 7.293 6.707a1 1 0 011.414-1.414l4 4a1 1 0 010 1.414l-4 4a1 1 0 01-1.414 0z" clip-rule="evenodd"/>
         </svg>
-        <span class="text-gray-500 font-medium">{{ $user->name }}</span>
+        <span class="text-gray-500 font-medium">{{ $user->full_name }}</span>
     </li>
 @endsection
 
@@ -30,7 +30,7 @@
                     {{ substr($user->name, 0, 1) }}
                 </div>
                 <div class="ml-4">
-                    <h1 class="text-3xl font-bold text-gray-900">{{ $user->name }}</h1>
+                    <h1 class="text-3xl font-bold text-gray-900">{{ $user->full_name }}</h1>
                     <p class="mt-1 text-sm text-gray-600">{{ $user->email }}</p>
                 </div>
             </div>
@@ -77,7 +77,7 @@
                     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Full Name</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->name }}</dd>
+                            <dd class="mt-1 text-sm text-gray-900">{{ $user->full_name }}</dd>
                         </div>
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Email Address</dt>
@@ -85,7 +85,7 @@
                         </div>
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Employee ID</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->employee_id ?? 'N/A' }}</dd>
+                            <dd class="mt-1 text-sm text-gray-900">{{ $user->employee_no ?? 'N/A' }}</dd>
                         </div>
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Phone Number</dt>
@@ -93,7 +93,7 @@
                         </div>
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Department</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->department ?? 'N/A' }}</dd>
+                            <dd class="mt-1 text-sm text-gray-900">{{ $user->department ? $user->department->name : 'N/A' }}</dd>
                         </div>
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Position</dt>
@@ -172,11 +172,11 @@
                         <dt class="text-sm font-medium text-gray-500 mb-2">Role</dt>
                         <dd>
                             <span class="inline-flex items-center px-3 py-1 rounded-full text-sm font-medium
-                                @if($user->role === 'admin') bg-purple-100 text-purple-800
-                                @elseif($user->role === 'manager') bg-blue-100 text-blue-800
+                                @if($user->user_type === 'admin') bg-purple-100 text-purple-800
+                                @elseif($user->user_type === 'manager') bg-blue-100 text-blue-800
                                 @else bg-green-100 text-green-800
                                 @endif">
-                                {{ ucfirst($user->role) }}
+                                {{ ucfirst($user->user_type) }}
                             </span>
                         </dd>
                     </div>
@@ -325,7 +325,7 @@
                             <h3 class="text-lg leading-6 font-medium text-gray-900">Delete User</h3>
                             <div class="mt-2">
                                 <p class="text-sm text-gray-500">
-                                    Are you sure you want to delete <span class="font-semibold">{{ $user->name }}</span>? This action cannot be undone and all related data will be permanently deleted.
+                                    Are you sure you want to delete <span class="font-semibold">{{ $user->full_name }}</span>? This action cannot be undone and all related data will be permanently deleted.
                                 </p>
                             </div>
                         </div>
