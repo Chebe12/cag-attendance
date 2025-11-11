@@ -127,7 +127,7 @@ class ScheduleController extends Controller
             'session_time' => 'nullable|string|in:morning,mid-morning,afternoon',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
-            'status' => 'required|string|in:scheduled,completed,cancelled,rescheduled',
+            'status' => 'required|string|in:draft,scheduled,pending,canceled',
             'notes' => 'nullable|string|max:1000',
         ], [
             'user_id.required' => 'Please select a user.',
@@ -232,7 +232,7 @@ class ScheduleController extends Controller
             'session_time' => 'nullable|string|in:morning,mid-morning,afternoon',
             'start_time' => 'required|date_format:H:i',
             'end_time' => 'required|date_format:H:i|after:start_time',
-            'status' => 'required|string|in:scheduled,completed,cancelled,rescheduled',
+            'status' => 'required|string|in:draft,scheduled,pending,canceled',
             'notes' => 'nullable|string|max:1000',
         ], [
             'user_id.required' => 'Please select a user.',

@@ -21,13 +21,13 @@
 @endsection
 
 @section('content')
-<div>
+<div x-data="{ isRecurring: {{ old('is_recurring', false) ? 'true' : 'false' }} }">
     <!-- Page header -->
     <div class="mb-8">
         <div class="flex items-center justify-between">
             <div>
                 <h1 class="text-3xl font-bold text-gray-900">Create New Schedule</h1>
-                <p class="mt-2 text-sm text-gray-700">Assign staff to shifts</p>
+                <p class="mt-2 text-sm text-gray-700">Assign staff to client visits</p>
             </div>
             <a href="{{ route('admin.schedules.index') }}"
                class="inline-flex items-center px-4 py-2 bg-gray-100 hover:bg-gray-200 text-gray-700 font-medium rounded-lg transition">
@@ -45,8 +45,33 @@
             @csrf
 
             <div class="p-6 space-y-6">
-                <!-- Schedule Information -->
+                <!-- Schedule Type -->
                 <div>
+                    <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
+                        <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M4 4v5h.582m15.356 2A8.001 8.001 0 004.582 9m0 0H9m11 11v-5h-.581m0 0a8.003 8.003 0 01-15.357-2m15.357 2H15"/>
+                        </svg>
+                        Schedule Type
+                    </h3>
+
+                    <div class="flex items-center space-x-4">
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="is_recurring" value="0" x-model="isRecurring"
+                                   class="form-radio text-green-600 focus:ring-green-500"
+                                   {{ old('is_recurring', false) ? '' : 'checked' }}>
+                            <span class="ml-2">One-time Schedule</span>
+                        </label>
+                        <label class="inline-flex items-center">
+                            <input type="radio" name="is_recurring" value="1" x-model="isRecurring"
+                                   class="form-radio text-green-600 focus:ring-green-500"
+                                   {{ old('is_recurring') ? 'checked' : '' }}>
+                            <span class="ml-2">Weekly Recurring</span>
+                        </label>
+                    </div>
+                </div>
+
+                <!-- Schedule Information -->
+                <div class="border-t border-gray-200 pt-6">
                     <h3 class="text-lg font-semibold text-gray-900 mb-4 flex items-center">
                         <svg class="w-5 h-5 mr-2 text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
@@ -67,11 +92,32 @@
                                 <option value="">Select Staff Member</option>
                                 @foreach($users as $user)
                                 <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>
-                                    {{ $user->name }} ({{ $user->employee_id }})
+                                    {{ $user->full_name }} ({{ $user->employee_no }})
                                 </option>
                                 @endforeach
                             </select>
                             @error('user_id')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Client -->
+                        <div>
+                            <label for="client_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                Client <span class="text-red-500">*</span>
+                            </label>
+                            <select name="client_id"
+                                    id="client_id"
+                                    required
+                                    class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('client_id') border-red-500 @enderror">
+                                <option value="">Select Client</option>
+                                @foreach($clients as $client)
+                                <option value="{{ $client->id }}" {{ old('client_id') == $client->id ? 'selected' : '' }}>
+                                    {{ $client->name }}
+                                </option>
+                                @endforeach
+                            </select>
+                            @error('client_id')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
@@ -97,18 +143,90 @@
                             @enderror
                         </div>
 
-                        <!-- Date -->
-                        <div>
-                            <label for="date" class="block text-sm font-medium text-gray-700 mb-2">
-                                Date <span class="text-red-500">*</span>
+                        <!-- Date (One-time) / Day of Week (Recurring) -->
+                        <div x-show="!isRecurring">
+                            <label for="scheduled_date" class="block text-sm font-medium text-gray-700 mb-2">
+                                Scheduled Date <span class="text-red-500">*</span>
                             </label>
                             <input type="date"
-                                   name="date"
-                                   id="date"
-                                   value="{{ old('date') }}"
+                                   name="scheduled_date"
+                                   id="scheduled_date"
+                                   value="{{ old('scheduled_date') }}"
+                                   :required="!isRecurring"
+                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('scheduled_date') border-red-500 @enderror">
+                            @error('scheduled_date')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <div x-show="isRecurring">
+                            <label for="day_of_week" class="block text-sm font-medium text-gray-700 mb-2">
+                                Day of Week <span class="text-red-500">*</span>
+                            </label>
+                            <select name="day_of_week"
+                                    id="day_of_week"
+                                    :required="isRecurring"
+                                    class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('day_of_week') border-red-500 @enderror">
+                                <option value="">Select Day</option>
+                                <option value="monday" {{ old('day_of_week') == 'monday' ? 'selected' : '' }}>Monday</option>
+                                <option value="tuesday" {{ old('day_of_week') == 'tuesday' ? 'selected' : '' }}>Tuesday</option>
+                                <option value="wednesday" {{ old('day_of_week') == 'wednesday' ? 'selected' : '' }}>Wednesday</option>
+                                <option value="thursday" {{ old('day_of_week') == 'thursday' ? 'selected' : '' }}>Thursday</option>
+                                <option value="friday" {{ old('day_of_week') == 'friday' ? 'selected' : '' }}>Friday</option>
+                                <option value="saturday" {{ old('day_of_week') == 'saturday' ? 'selected' : '' }}>Saturday</option>
+                                <option value="sunday" {{ old('day_of_week') == 'sunday' ? 'selected' : '' }}>Sunday</option>
+                            </select>
+                            @error('day_of_week')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Session Time (for recurring) -->
+                        <div x-show="isRecurring">
+                            <label for="session_time" class="block text-sm font-medium text-gray-700 mb-2">
+                                Session Time
+                            </label>
+                            <select name="session_time"
+                                    id="session_time"
+                                    class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('session_time') border-red-500 @enderror">
+                                <option value="">Select Session</option>
+                                <option value="morning" {{ old('session_time') == 'morning' ? 'selected' : '' }}>Morning</option>
+                                <option value="mid-morning" {{ old('session_time') == 'mid-morning' ? 'selected' : '' }}>Mid-Morning</option>
+                                <option value="afternoon" {{ old('session_time') == 'afternoon' ? 'selected' : '' }}>Afternoon</option>
+                            </select>
+                            @error('session_time')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Start Time -->
+                        <div>
+                            <label for="start_time" class="block text-sm font-medium text-gray-700 mb-2">
+                                Start Time <span class="text-red-500">*</span>
+                            </label>
+                            <input type="time"
+                                   name="start_time"
+                                   id="start_time"
+                                   value="{{ old('start_time') }}"
                                    required
-                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('date') border-red-500 @enderror">
-                            @error('date')
+                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('start_time') border-red-500 @enderror">
+                            @error('start_time')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- End Time -->
+                        <div>
+                            <label for="end_time" class="block text-sm font-medium text-gray-700 mb-2">
+                                End Time <span class="text-red-500">*</span>
+                            </label>
+                            <input type="time"
+                                   name="end_time"
+                                   id="end_time"
+                                   value="{{ old('end_time') }}"
+                                   required
+                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('end_time') border-red-500 @enderror">
+                            @error('end_time')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
@@ -122,8 +240,10 @@
                                     id="status"
                                     required
                                     class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('status') border-red-500 @enderror">
-                                <option value="scheduled" {{ old('status', 'scheduled') === 'scheduled' ? 'selected' : '' }}>Scheduled</option>
-                                <option value="cancelled" {{ old('status') === 'cancelled' ? 'selected' : '' }}>Cancelled</option>
+                                <option value="draft" {{ old('status', 'draft') === 'draft' ? 'selected' : '' }}>Draft</option>
+                                <option value="scheduled" {{ old('status') === 'scheduled' ? 'selected' : '' }}>Scheduled</option>
+                                <option value="pending" {{ old('status') === 'pending' ? 'selected' : '' }}>Pending</option>
+                                <option value="canceled" {{ old('status') === 'canceled' ? 'selected' : '' }}>Canceled</option>
                             </select>
                             @error('status')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
