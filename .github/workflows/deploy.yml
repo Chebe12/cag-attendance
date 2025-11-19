@@ -26,11 +26,11 @@ jobs:
           # server: "ftp.rosymaxpharmacy.com"
           # username: "ECC@affliate.rosymaxpharmacy.com"
           # password: "dLL9DKGiL0Op"
-          server: "ftp.caglobals.com"
-          username: "user@att.caglobals.com"
-          password: "Qm.ziPoGP5dXW_j2"
+          server: "ftp.rosymaxpharmacy.com"
+          username: "cpuser@testing.rosymaxpharmacy.com"
+          password: "m6dt{r881Tj="
           local-dir: ./
           server-dir: /
           port: 21
           protocol: ftps
-          dangerous-clean-slate: false
+          dangerous-clean-slate: true
