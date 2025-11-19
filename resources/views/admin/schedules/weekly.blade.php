@@ -44,21 +44,24 @@
     }
 
     .schedule-cell {
-        min-height: 100px;
+        min-height: 180px;
         vertical-align: top;
+        padding: 12px !important;
     }
 
     .schedule-item {
-        margin-bottom: 6px;
-        padding: 8px;
+        margin-bottom: 8px;
+        padding: 10px;
         border-radius: 6px;
-        font-size: 0.75rem;
+        font-size: 0.8125rem;
         transition: transform 0.2s;
+        line-height: 1.4;
     }
 
     .schedule-item:hover {
         transform: translateY(-1px);
-        box-shadow: 0 2px 4px rgba(0,0,0,0.1);
+        box-shadow: 0 4px 6px rgba(0,0,0,0.15);
+        cursor: pointer;
     }
 </style>
 

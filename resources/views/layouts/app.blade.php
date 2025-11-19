@@ -81,12 +81,8 @@
             <div class="flex items-center justify-between h-16 px-4 bg-green-950">
                 <div class="flex items-center">
                     <div class="flex-shrink-0">
-                        <div
-                            class="w-10 h-10 bg-gradient-to-br from-green-400 to-orange-500 rounded-lg flex items-center justify-center">
-                            <span class="text-white font-bold text-xl">CA</span>
-                        </div>
+                        <img src="{{ asset('storage/logo.png') }}" alt="CA Global" class="h-10 w-auto">
                     </div>
-                    <span class="ml-3 text-white font-semibold text-lg">CA Global</span>
                 </div>
                 <button @click="sidebarOpen = false" class="text-green-200 hover:text-white">
                     <svg class="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
@@ -108,11 +104,7 @@
                 <!-- Sidebar header -->
                 <div class="flex items-center flex-shrink-0 px-6 py-5 bg-green-950">
                     <div class="flex items-center">
-                        <div
-                            class="w-10 h-10 bg-gradient-to-br from-green-400 to-orange-500 rounded-lg flex items-center justify-center shadow-lg">
-                            <span class="text-white font-bold text-xl">CA</span>
-                        </div>
-                        <span class="ml-3 text-white font-semibold text-lg">CA Global</span>
+                        <img src="{{ asset('storage/logo.png') }}" alt="CA Global" class="h-10 w-auto">
                     </div>
                 </div>
 

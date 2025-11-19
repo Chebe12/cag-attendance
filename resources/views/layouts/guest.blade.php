@@ -8,6 +8,9 @@
 
     <title>{{ config('app.name', 'CA Global Attendance') }} - @yield('title', 'Login')</title>
 
+    <!-- Favicon -->
+    <link rel="icon" type="image/x-icon" href="{{ asset('storage/favicon.ico') }}">
+
     <!-- Fonts -->
     <link rel="preconnect" href="https://fonts.bunny.net">
     <link href="https://fonts.bunny.net/css?family=inter:400,500,600,700&display=swap" rel="stylesheet" />
@@ -96,10 +99,7 @@
             <div class="relative z-10 max-w-md mx-auto text-center">
                 <!-- Logo -->
                 <div class="flex justify-center mb-8">
-                    <div
-                        class="w-24 h-24 bg-gradient-to-br from-green-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-2xl transform hover:scale-105 transition-transform duration-300">
-                        <span class="text-white font-bold text-4xl">CA</span>
-                    </div>
+                    <img src="{{ asset('storage/logo.png') }}" alt="CA Global" class="h-24 w-auto transform hover:scale-105 transition-transform duration-300">
                 </div>
 
                 <!-- Company name -->
@@ -164,10 +164,7 @@
             <div class="mx-auto w-full max-w-sm lg:w-96">
                 <!-- Mobile logo -->
                 <div class="lg:hidden flex justify-center mb-8">
-                    <div
-                        class="w-20 h-20 bg-gradient-to-br from-green-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
-                        <span class="text-white font-bold text-3xl">CA</span>
-                    </div>
+                    <img src="{{ asset('storage/logo.png') }}" alt="CA Global" class="h-20 w-auto">
                 </div>
 
                 <div>
