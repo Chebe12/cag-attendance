@@ -85,7 +85,7 @@ class UserController extends Controller
     {
         // Validate the request
         $validated = $request->validate([
-            'employee_no' => 'required|string|max:50|unique:users,employee_no',
+            'employee_no' => 'nullable|string|max:50|unique:users,employee_no',
             'firstname' => 'required|string|max:100',
             'middlename' => 'nullable|string|max:100',
             'lastname' => 'required|string|max:100',
@@ -99,7 +99,6 @@ class UserController extends Controller
             'user_type' => 'required|string|in:admin,instructor,office_staff',
             'status' => 'required|string|in:active,inactive,suspended',
         ], [
-            'employee_no.required' => 'Employee number is required.',
             'employee_no.unique' => 'This employee number is already in use.',
             'email.unique' => 'This email address is already registered.',
             'password.confirmed' => 'Password confirmation does not match.',
@@ -108,6 +107,11 @@ class UserController extends Controller
             'status.in' => 'Invalid status selected.',
             'department_id.exists' => 'Selected department does not exist.',
         ]);
+
+        // Auto-generate employee number if not provided
+        if (empty($validated['employee_no'])) {
+            $validated['employee_no'] = User::generateEmployeeNo();
+        }
 
         // Hash the password
         $validated['password'] = Hash::make($validated['password']);
@@ -136,6 +140,7 @@ class UserController extends Controller
     {
         // Load relationships for better insights
         $user->load([
+            'department',
             'schedules' => function($query) {
                 $query->latest()->take(10);
             },
@@ -153,9 +158,19 @@ class UserController extends Controller
             'present' => $user->attendances()->where('status', 'present')->count(),
             'late' => $user->attendances()->where('status', 'late')->count(),
             'absent' => $user->attendances()->where('status', 'absent')->count(),
+            'thisMonth' => $user->attendances()->whereMonth('attendance_date', now()->month)->count(),
+            'avgHours' => round($user->attendances()
+                ->whereNotNull('check_out')
+                ->get()
+                ->avg(function($attendance) {
+                    return $attendance->check_in->diffInHours($attendance->check_out);
+                }), 1) ?: 0,
         ];
 
-        return view('admin.users.show', compact('user', 'attendanceStats'));
+        // Get recent attendance for the timeline
+        $recentAttendance = $user->attendances;
+
+        return view('admin.users.show', compact('user', 'attendanceStats', 'recentAttendance'));
     }
 
     /**

@@ -12,18 +12,13 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('schedules', function (Blueprint $table) {
-            // Add day of week field for recurring schedules
-            $table->enum('day_of_week', [
-                'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'
-            ])->nullable()->after('scheduled_date');
 
             // Add session time field
             $table->enum('session_time', [
-                'morning', 'mid-morning', 'afternoon'
+                'morning',
+                'mid-morning',
+                'afternoon'
             ])->nullable()->after('day_of_week');
-
-            // Add recurring flag
-            $table->boolean('is_recurring')->default(false)->after('session_time');
 
             // Make scheduled_date nullable for recurring schedules
             $table->date('scheduled_date')->nullable()->change();

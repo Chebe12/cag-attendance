@@ -80,6 +80,7 @@ class ClientController extends Controller
         // Validate the request
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:50|unique:clients,code',
             'contact_person' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:clients,email',
             'phone' => 'required|string|max:20',
@@ -91,12 +92,18 @@ class ClientController extends Controller
             'notes' => 'nullable|string|max:1000',
         ], [
             'name.required' => 'Client name is required.',
+            'code.unique' => 'This client code is already in use.',
             'contact_person.required' => 'Contact person name is required.',
             'email.required' => 'Email address is required.',
             'email.unique' => 'This email address is already registered.',
             'phone.required' => 'Phone number is required.',
             'status.in' => 'Invalid status selected.',
         ]);
+
+        // Auto-generate code if not provided
+        if (empty($validated['code'])) {
+            $validated['code'] = Client::generateCode($validated['name']);
+        }
 
         // Create the client
         $client = Client::create($validated);
@@ -117,10 +124,17 @@ class ClientController extends Controller
         // Find client including soft deleted
         $client = Client::withTrashed()->findOrFail($id);
 
-        // Load relationships
+        // Load relationships and counts
         $client->load(['schedules' => function($query) {
             $query->with(['user', 'shift'])->latest()->take(15);
         }]);
+
+        $client->loadCount(['shifts', 'schedules']);
+
+        // Get unique staff assigned to this client's shifts
+        $staffCount = \App\Models\User::whereHas('schedules', function($query) use ($client) {
+            $query->where('client_id', $client->id);
+        })->distinct()->count();
 
         // Get schedule statistics
         $scheduleStats = [
@@ -129,7 +143,7 @@ class ClientController extends Controller
             'completed' => $client->schedules()->where('scheduled_date', '<', now()->toDateString())->count(),
         ];
 
-        return view('admin.clients.show', compact('client', 'scheduleStats'));
+        return view('admin.clients.show', compact('client', 'scheduleStats', 'staffCount'));
     }
 
     /**
@@ -156,6 +170,7 @@ class ClientController extends Controller
         // Validate the request
         $validated = $request->validate([
             'name' => 'required|string|max:255',
+            'code' => 'nullable|string|max:50|unique:clients,code,' . $client->id,
             'contact_person' => 'required|string|max:255',
             'email' => 'required|email|max:255|unique:clients,email,' . $client->id,
             'phone' => 'required|string|max:20',
@@ -167,6 +182,7 @@ class ClientController extends Controller
             'notes' => 'nullable|string|max:1000',
         ], [
             'name.required' => 'Client name is required.',
+            'code.unique' => 'This client code is already in use.',
             'contact_person.required' => 'Contact person name is required.',
             'email.required' => 'Email address is required.',
             'email.unique' => 'This email address is already registered.',

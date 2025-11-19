@@ -12,6 +12,7 @@ class Client extends Model
 
     protected $fillable = [
         'name',
+        'code',
         'contact_person',
         'email',
         'phone',
@@ -28,8 +29,41 @@ class Client extends Model
         return $this->hasMany(Schedule::class);
     }
 
+    public function shifts()
+    {
+        return $this->hasMany(Shift::class);
+    }
+
     public function scopeActive($query)
     {
         return $query->where('status', 'active');
+    }
+
+    /**
+     * Generate a unique client code from the client name
+     */
+    public static function generateCode($name)
+    {
+        // Convert name to uppercase and take first 3 letters
+        $prefix = strtoupper(substr(preg_replace('/[^A-Za-z]/', '', $name), 0, 3));
+
+        // If less than 3 letters, pad with 'X'
+        $prefix = str_pad($prefix, 3, 'X');
+
+        // Find the last client with this prefix
+        $lastClient = self::where('code', 'LIKE', $prefix . '%')
+            ->orderBy('code', 'desc')
+            ->first();
+
+        if ($lastClient) {
+            // Extract the number part and increment
+            $lastNumber = (int) substr($lastClient->code, 3);
+            $newNumber = $lastNumber + 1;
+        } else {
+            $newNumber = 1;
+        }
+
+        // Format: PREFIX001, PREFIX002, etc.
+        return $prefix . str_pad($newNumber, 3, '0', STR_PAD_LEFT);
     }
 }

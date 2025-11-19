@@ -115,7 +115,7 @@
         <div class="p-6">
             <div x-show="attendanceType" style="display: none;">
                 <h3 class="text-lg font-semibold text-gray-900 mb-4">Scan QR Code</h3>
-                <div class="bg-gray-900 rounded-lg overflow-hidden" style="aspect-ratio: 4/3;">
+                <div class="bg-gray-900 rounded-lg overflow-hidden mx-auto" style="max-width: 600px; aspect-ratio: 1/1;">
                     <div id="qr-reader" class="w-full h-full"></div>
                 </div>
                 <div class="mt-4 text-center">
@@ -149,6 +149,38 @@ function attendanceScanner() {
         message: '',
         messageType: 'success',
         processing: false,
+        latitude: null,
+        longitude: null,
+        locationError: null,
+
+        init() {
+            // Request geolocation permission on page load
+            this.getLocation();
+        },
+
+        getLocation() {
+            if (navigator.geolocation) {
+                navigator.geolocation.getCurrentPosition(
+                    (position) => {
+                        this.latitude = position.coords.latitude;
+                        this.longitude = position.coords.longitude;
+                        this.locationError = null;
+                    },
+                    (error) => {
+                        console.error('Geolocation error:', error);
+                        this.locationError = error.message;
+                        // Continue without location - backend handles optional location
+                    },
+                    {
+                        enableHighAccuracy: true,
+                        timeout: 10000,
+                        maximumAge: 0
+                    }
+                );
+            } else {
+                this.locationError = 'Geolocation is not supported by this browser';
+            }
+        },
 
         setAttendanceType(type, scheduleId) {
             this.attendanceType = type;
@@ -172,12 +204,18 @@ function attendanceScanner() {
                 return;
             }
 
+            // Refresh location before starting scanner
+            this.getLocation();
+
             try {
                 this.html5QrCode = new Html5Qrcode("qr-reader");
 
+                // Calculate responsive qrbox size (larger for mobile)
+                const qrboxSize = Math.min(window.innerWidth * 0.7, 400);
+
                 await this.html5QrCode.start(
                     { facingMode: "environment" },
-                    { fps: 10, qrbox: { width: 250, height: 250 } },
+                    { fps: 10, qrbox: { width: qrboxSize, height: qrboxSize } },
                     (decodedText) => this.onScanSuccess(decodedText),
                     () => {}
                 );
@@ -215,17 +253,26 @@ function attendanceScanner() {
             await this.stopScanner();
 
             try {
+                // Prepare request data with location
+                const requestData = {
+                    qr_code: qrCode,
+                    attendance_type: this.attendanceType,
+                    schedule_id: this.selectedScheduleId
+                };
+
+                // Include location if available
+                if (this.latitude && this.longitude) {
+                    requestData.latitude = this.latitude;
+                    requestData.longitude = this.longitude;
+                }
+
                 const response = await fetch('{{ route('staff.attendance.scan') }}', {
                     method: 'POST',
                     headers: {
                         'Content-Type': 'application/json',
                         'X-CSRF-TOKEN': '{{ csrf_token() }}'
                     },
-                    body: JSON.stringify({
-                        qr_code: qrCode,
-                        attendance_type: this.attendanceType,
-                        schedule_id: this.selectedScheduleId
-                    })
+                    body: JSON.stringify(requestData)
                 });
 
                 const data = await response.json();

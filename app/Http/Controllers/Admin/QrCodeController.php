@@ -193,8 +193,8 @@ class QrCodeController extends Controller
                 Storage::disk('public')->delete($qrCode->qr_image_path);
             }
 
-            // Generate QR code image
-            $qrCodeImage = QrCodeGenerator::format('png')
+            // Generate QR code as SVG (no extension required)
+            $qrCodeSvg = QrCodeGenerator::format('svg')
                 ->size(400)
                 ->errorCorrection('H')
                 ->generate($qrCode->code);
@@ -205,10 +205,10 @@ class QrCodeController extends Controller
                 Storage::disk('public')->makeDirectory($directory);
             }
 
-            // Save the QR code image
-            $fileName = 'qrcode_' . $qrCode->id . '_' . time() . '.png';
+            // Save the QR code image as SVG
+            $fileName = 'qrcode_' . $qrCode->id . '_' . time() . '.svg';
             $path = $directory . '/' . $fileName;
-            Storage::disk('public')->put($path, $qrCodeImage);
+            Storage::disk('public')->put($path, $qrCodeSvg);
 
             // Update the QR code record with image path
             $qrCode->update([
@@ -238,8 +238,8 @@ class QrCodeController extends Controller
         try {
             // Generate QR code image if it doesn't exist
             if (!$qrCode->qr_image_path || !Storage::disk('public')->exists($qrCode->qr_image_path)) {
-                // Generate QR code image
-                $qrCodeImage = QrCodeGenerator::format('png')
+                // Generate QR code as SVG
+                $qrCodeSvg = QrCodeGenerator::format('svg')
                     ->size(400)
                     ->errorCorrection('H')
                     ->generate($qrCode->code);
@@ -250,10 +250,10 @@ class QrCodeController extends Controller
                     Storage::disk('public')->makeDirectory($directory);
                 }
 
-                // Save the QR code image
-                $fileName = 'qrcode_' . $qrCode->id . '_' . time() . '.png';
+                // Save the QR code image as SVG
+                $fileName = 'qrcode_' . $qrCode->id . '_' . time() . '.svg';
                 $path = $directory . '/' . $fileName;
-                Storage::disk('public')->put($path, $qrCodeImage);
+                Storage::disk('public')->put($path, $qrCodeSvg);
 
                 // Update the QR code record
                 $qrCode->update(['qr_image_path' => $path]);
@@ -262,8 +262,11 @@ class QrCodeController extends Controller
             // Get the full path to the file
             $filePath = Storage::disk('public')->path($qrCode->qr_image_path);
 
+            // Determine file extension
+            $extension = pathinfo($qrCode->qr_image_path, PATHINFO_EXTENSION);
+
             // Download the file
-            $fileName = 'qrcode_' . Str::slug($qrCode->code) . '.png';
+            $fileName = 'qrcode_' . Str::slug($qrCode->code) . '.' . $extension;
             return response()->download($filePath, $fileName);
 
         } catch (\Exception $e) {
@@ -312,15 +315,22 @@ class QrCodeController extends Controller
      */
     public function print(QrCode $qrCode)
     {
-        // Generate QR code image inline (base64) for printing
-        $qrCodeImage = base64_encode(
-            QrCodeGenerator::format('png')
+        try {
+            // Generate QR code as SVG for printing (no extension needed)
+            $qrCodeSvg = QrCodeGenerator::format('svg')
                 ->size(600)
                 ->errorCorrection('H')
-                ->generate($qrCode->code)
-        );
+                ->generate($qrCode->code);
 
-        return view('admin.qr-codes.print', compact('qrCode', 'qrCodeImage'));
+            return view('admin.qr-codes.print', [
+                'qrCode' => $qrCode,
+                'qrCodeSvg' => $qrCodeSvg
+            ]);
+        } catch (\Exception $e) {
+            return redirect()
+                ->route('admin.qr-codes.show', $qrCode)
+                ->with('error', 'Failed to generate QR code for printing: ' . $e->getMessage());
+        }
     }
 
     /**

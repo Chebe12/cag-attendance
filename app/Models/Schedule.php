@@ -30,6 +30,63 @@ class Schedule extends Model
         'is_recurring' => 'boolean',
     ];
 
+    /**
+     * Get the start and end time for a session
+     */
+    public static function getSessionTimes($session)
+    {
+        $times = [
+            'morning' => ['start' => '08:30:00', 'end' => '10:00:00'],
+            'mid-morning' => ['start' => '10:30:00', 'end' => '12:00:00'],
+            'afternoon' => ['start' => '12:30:00', 'end' => '14:00:00'],
+        ];
+
+        return $times[$session] ?? null;
+    }
+
+    /**
+     * Get formatted session time range
+     */
+    public function getSessionTimeRangeAttribute()
+    {
+        if (!$this->session_time) {
+            return 'N/A';
+        }
+
+        $times = self::getSessionTimes($this->session_time);
+        if (!$times) {
+            return 'N/A';
+        }
+
+        return date('h:i A', strtotime($times['start'])) . ' - ' . date('h:i A', strtotime($times['end']));
+    }
+
+    /**
+     * Get the actual start time for this session
+     */
+    public function getActualStartTimeAttribute()
+    {
+        if ($this->start_time) {
+            return $this->start_time;
+        }
+
+        $times = self::getSessionTimes($this->session_time);
+        return $times ? $times['start'] : null;
+    }
+
+    /**
+     * Get the actual end time for this session
+     */
+    public function getActualEndTimeAttribute()
+    {
+        if ($this->end_time) {
+            return $this->end_time;
+        }
+
+        $times = self::getSessionTimes($this->session_time);
+        return $times ? $times['end'] : null;
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);

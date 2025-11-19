@@ -40,13 +40,18 @@ class ScheduleController extends Controller
         }
 
         // Filter by user
-        if ($request->filled('user_id')) {
-            $query->where('user_id', $request->user_id);
+        if ($request->filled('user')) {
+            $query->where('user_id', $request->user);
         }
 
         // Filter by client
         if ($request->filled('client_id')) {
             $query->where('client_id', $request->client_id);
+        }
+
+        // Filter by session
+        if ($request->filled('session')) {
+            $query->where('session_time', $request->session);
         }
 
         // Filter by shift
@@ -57,6 +62,11 @@ class ScheduleController extends Controller
         // Filter by status
         if ($request->filled('status')) {
             $query->where('status', $request->status);
+        }
+
+        // Filter by single date (from the view filter)
+        if ($request->filled('date')) {
+            $query->whereDate('scheduled_date', $request->date);
         }
 
         // Filter by date range
@@ -73,10 +83,11 @@ class ScheduleController extends Controller
             $query->where('day_of_week', $request->day_of_week);
         }
 
-        // Default to upcoming schedules if no date filter
-        if (!$request->filled('date_from') && !$request->filled('date_to') && !$request->filled('show_all')) {
-            $query->where('scheduled_date', '>=', now()->toDateString());
-        }
+        // Default to upcoming schedules if no date filter (removed to show all schedules)
+        // Comment this out to show all schedules by default
+        // if (!$request->filled('date_from') && !$request->filled('date_to') && !$request->filled('date') && !$request->filled('show_all')) {
+        //     $query->where('scheduled_date', '>=', now()->toDateString());
+        // }
 
         // Order by scheduled date and start time
         $schedules = $query->orderBy('scheduled_date', 'desc')
@@ -99,12 +110,11 @@ class ScheduleController extends Controller
      */
     public function create()
     {
-        // Get active users, clients, and shifts for dropdowns
+        // Get active users and clients for dropdowns
         $users = User::active()->orderBy('firstname')->get();
         $clients = Client::active()->orderBy('name')->get();
-        $shifts = Shift::active()->orderBy('start_time')->get();
 
-        return view('admin.schedules.create', compact('users', 'clients', 'shifts'));
+        return view('admin.schedules.create', compact('users', 'clients'));
     }
 
     /**
@@ -120,13 +130,11 @@ class ScheduleController extends Controller
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'client_id' => 'required|exists:clients,id',
-            'shift_id' => 'required|exists:shifts,id',
+            'session_time' => 'required|in:morning,mid-morning,afternoon',
+            'shift_id' => 'nullable|exists:shifts,id',
             'is_recurring' => 'boolean',
             'scheduled_date' => 'nullable|date|after_or_equal:today|required_if:is_recurring,false',
             'day_of_week' => 'nullable|string|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday|required_if:is_recurring,true',
-            'session_time' => 'nullable|string|in:morning,mid-morning,afternoon',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
             'status' => 'required|string|in:draft,scheduled,pending,canceled',
             'notes' => 'nullable|string|max:1000',
         ], [
@@ -134,16 +142,13 @@ class ScheduleController extends Controller
             'user_id.exists' => 'The selected user does not exist.',
             'client_id.required' => 'Please select a client.',
             'client_id.exists' => 'The selected client does not exist.',
-            'shift_id.required' => 'Please select a shift.',
+            'session_time.required' => 'Please select a session.',
+            'session_time.in' => 'Invalid session selected.',
             'shift_id.exists' => 'The selected shift does not exist.',
             'scheduled_date.required_if' => 'Scheduled date is required for non-recurring schedules.',
             'scheduled_date.after_or_equal' => 'Scheduled date must be today or in the future.',
             'day_of_week.required_if' => 'Day of week is required for recurring schedules.',
             'day_of_week.in' => 'Invalid day of week selected.',
-            'session_time.in' => 'Invalid session time selected.',
-            'start_time.required' => 'Start time is required.',
-            'end_time.required' => 'End time is required.',
-            'end_time.after' => 'End time must be after start time.',
             'status.in' => 'Invalid status selected.',
         ]);
 
@@ -154,7 +159,12 @@ class ScheduleController extends Controller
 
         // Set created_by to authenticated admin
         $validated['created_by'] = auth()->id();
-        $validated['is_recurring'] = $request->has('is_recurring') ? true : false;
+        $validated['is_recurring'] = $request->input('is_recurring', 0) == 1;
+
+        // Get session times based on session_time
+        $sessionTimes = Schedule::getSessionTimes($validated['session_time']);
+        $validated['start_time'] = $sessionTimes['start'];
+        $validated['end_time'] = $sessionTimes['end'];
 
         // Check for scheduling conflicts (only for non-recurring schedules)
         if (!$validated['is_recurring'] && !empty($validated['scheduled_date'])) {
@@ -203,12 +213,11 @@ class ScheduleController extends Controller
      */
     public function edit(Schedule $schedule)
     {
-        // Get active users, clients, and shifts for dropdowns
+        // Get active users and clients for dropdowns
         $users = User::active()->orderBy('firstname')->get();
         $clients = Client::active()->orderBy('name')->get();
-        $shifts = Shift::active()->orderBy('start_time')->get();
 
-        return view('admin.schedules.edit', compact('schedule', 'users', 'clients', 'shifts'));
+        return view('admin.schedules.edit', compact('schedule', 'users', 'clients'));
     }
 
     /**
@@ -225,13 +234,11 @@ class ScheduleController extends Controller
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'client_id' => 'required|exists:clients,id',
-            'shift_id' => 'required|exists:shifts,id',
+            'session_time' => 'required|in:morning,mid-morning,afternoon',
+            'shift_id' => 'nullable|exists:shifts,id',
             'is_recurring' => 'boolean',
             'scheduled_date' => 'nullable|date|required_if:is_recurring,false',
             'day_of_week' => 'nullable|string|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday|required_if:is_recurring,true',
-            'session_time' => 'nullable|string|in:morning,mid-morning,afternoon',
-            'start_time' => 'required|date_format:H:i',
-            'end_time' => 'required|date_format:H:i|after:start_time',
             'status' => 'required|string|in:draft,scheduled,pending,canceled',
             'notes' => 'nullable|string|max:1000',
         ], [
@@ -239,15 +246,12 @@ class ScheduleController extends Controller
             'user_id.exists' => 'The selected user does not exist.',
             'client_id.required' => 'Please select a client.',
             'client_id.exists' => 'The selected client does not exist.',
-            'shift_id.required' => 'Please select a shift.',
+            'session_time.required' => 'Please select a session.',
+            'session_time.in' => 'Invalid session selected.',
             'shift_id.exists' => 'The selected shift does not exist.',
             'scheduled_date.required_if' => 'Scheduled date is required for non-recurring schedules.',
             'day_of_week.required_if' => 'Day of week is required for recurring schedules.',
             'day_of_week.in' => 'Invalid day of week selected.',
-            'session_time.in' => 'Invalid session time selected.',
-            'start_time.required' => 'Start time is required.',
-            'end_time.required' => 'End time is required.',
-            'end_time.after' => 'End time must be after start time.',
             'status.in' => 'Invalid status selected.',
         ]);
 
@@ -256,7 +260,12 @@ class ScheduleController extends Controller
             $validated['day_of_week'] = strtolower(Carbon::parse($validated['scheduled_date'])->format('l'));
         }
 
-        $validated['is_recurring'] = $request->has('is_recurring') ? true : false;
+        $validated['is_recurring'] = $request->input('is_recurring', 0) == 1;
+
+        // Get session times based on session_time
+        $sessionTimes = Schedule::getSessionTimes($validated['session_time']);
+        $validated['start_time'] = $sessionTimes['start'];
+        $validated['end_time'] = $sessionTimes['end'];
 
         // Check for scheduling conflicts (only for non-recurring schedules, excluding current schedule)
         if (!$validated['is_recurring'] && !empty($validated['scheduled_date'])) {
@@ -538,5 +547,138 @@ class ScheduleController extends Controller
             'schedules' => $schedules,
             'count' => $schedules->count(),
         ]);
+    }
+
+    /**
+     * Display the printable schedules page with filters.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\View\View
+     */
+    public function printView(Request $request)
+    {
+        // Build query with relationships
+        $query = Schedule::with(['user', 'client', 'shift']);
+
+        // Filter by user
+        if ($request->filled('user_id')) {
+            $query->where('user_id', $request->user_id);
+        }
+
+        // Filter by client
+        if ($request->filled('client_id')) {
+            $query->where('client_id', $request->client_id);
+        }
+
+        // Filter by date range
+        if ($request->filled('date_from')) {
+            $query->where('scheduled_date', '>=', $request->date_from);
+        }
+
+        if ($request->filled('date_to')) {
+            $query->where('scheduled_date', '<=', $request->date_to);
+        }
+
+        // Default to current week if no date filter
+        if (!$request->filled('date_from') && !$request->filled('date_to')) {
+            $query->whereBetween('scheduled_date', [
+                now()->startOfWeek(),
+                now()->endOfWeek()
+            ]);
+        }
+
+        // Filter by status
+        if ($request->filled('status')) {
+            $query->where('status', $request->status);
+        } else {
+            // Default to scheduled only
+            $query->where('status', 'scheduled');
+        }
+
+        // Order by date and time
+        $schedules = $query->orderBy('scheduled_date', 'asc')
+                          ->orderBy('start_time', 'asc')
+                          ->get();
+
+        // Get data for filters
+        $users = User::active()->orderBy('firstname')->get();
+        $clients = Client::active()->orderBy('name')->get();
+
+        // Group schedules by date for better display
+        $groupedSchedules = $schedules->groupBy(function($schedule) {
+            return $schedule->scheduled_date ? $schedule->scheduled_date->format('Y-m-d') : 'No Date';
+        });
+
+        return view('admin.schedules.print', compact('schedules', 'groupedSchedules', 'users', 'clients'));
+    }
+
+    /**
+     * Display the weekly schedule overview with sessions.
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\View\View
+     */
+    public function weeklyOverview(Request $request)
+    {
+        // Get filter parameters
+        $userId = $request->input('user_id');
+        $weekOffset = $request->input('week', 0);
+
+        // Calculate week start and end dates
+        $weekStart = now()->startOfWeek()->addWeeks($weekOffset);
+        $weekEnd = now()->startOfWeek()->addWeeks($weekOffset)->endOfWeek();
+
+        // Build query
+        $query = Schedule::with(['user', 'client'])
+            ->whereBetween('scheduled_date', [$weekStart, $weekEnd])
+            ->where('status', '!=', 'cancelled');
+
+        // Filter by user if specified
+        if ($userId) {
+            $query->where('user_id', $userId);
+        }
+
+        // Get all schedules for the week
+        $schedules = $query->get();
+
+        // Get all instructors
+        $users = User::active()->orderBy('firstname')->get();
+
+        // Structure data by day and session
+        $weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+        $sessions = ['morning', 'mid-morning', 'afternoon'];
+
+        // Map day names to Carbon day constants (0=Sunday, 1=Monday, 2=Tuesday, etc.)
+        $dayMapping = [
+            'monday' => Carbon::MONDAY,
+            'tuesday' => Carbon::TUESDAY,
+            'wednesday' => Carbon::WEDNESDAY,
+            'thursday' => Carbon::THURSDAY,
+            'friday' => Carbon::FRIDAY,
+        ];
+
+        $weekSchedule = [];
+        foreach ($weekDays as $day) {
+            // Calculate the date for this day of the week
+            $dayOfWeek = $dayMapping[$day];
+            $date = $weekStart->copy()->startOfWeek()->addDays($dayOfWeek - 1);
+
+            $weekSchedule[$day] = [
+                'date' => $date,
+                'sessions' => []
+            ];
+
+            foreach ($sessions as $session) {
+                $daySchedules = $schedules->filter(function($schedule) use ($date, $session) {
+                    return $schedule->scheduled_date &&
+                           $schedule->scheduled_date->isSameDay($date) &&
+                           $schedule->session_time === $session;
+                });
+
+                $weekSchedule[$day]['sessions'][$session] = $daySchedules;
+            }
+        }
+
+        return view('admin.schedules.weekly', compact('weekSchedule', 'users', 'weekStart', 'weekEnd', 'weekOffset', 'userId'));
     }
 }

@@ -27,7 +27,7 @@
         <div class="flex items-center justify-between">
             <div>
                 <h1 class="text-3xl font-bold text-gray-900">Schedule Details</h1>
-                <p class="mt-2 text-sm text-gray-700">{{ $schedule->user->name ?? 'N/A' }} - {{ $schedule->date->format('M d, Y') }}</p>
+                <p class="mt-2 text-sm text-gray-700">{{ $schedule->user->full_name ?? 'N/A' }} - {{ $schedule->scheduled_date ? $schedule->scheduled_date->format('M d, Y') : 'N/A' }}</p>
             </div>
             <div class="flex items-center space-x-3">
                 <a href="{{ route('admin.schedules.edit', $schedule) }}"
@@ -72,30 +72,37 @@
                     <dl class="grid grid-cols-1 sm:grid-cols-2 gap-6">
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Staff Member</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $schedule->user->name ?? 'N/A' }}</dd>
-                            <dd class="mt-0.5 text-xs text-gray-500">{{ $schedule->user->employee_id ?? 'N/A' }}</dd>
+                            <dd class="mt-1 text-sm text-gray-900">{{ $schedule->user->full_name ?? 'N/A' }}</dd>
+                            <dd class="mt-0.5 text-xs text-gray-500">{{ $schedule->user->employee_no ?? 'N/A' }}</dd>
                         </div>
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Date</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $schedule->date->format('l, F d, Y') }}</dd>
+                            <dd class="mt-1 text-sm text-gray-900">{{ $schedule->scheduled_date ? $schedule->scheduled_date->format('l, F d, Y') : 'N/A' }}</dd>
                         </div>
                         <div>
-                            <dt class="text-sm font-medium text-gray-500">Shift</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $schedule->shift->name ?? 'N/A' }}</dd>
+                            <dt class="text-sm font-medium text-gray-500">Session</dt>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {{ $schedule->session_time == 'morning' ? 'bg-blue-100 text-blue-800' : '' }}
+                                    {{ $schedule->session_time == 'mid-morning' ? 'bg-purple-100 text-purple-800' : '' }}
+                                    {{ $schedule->session_time == 'afternoon' ? 'bg-orange-100 text-orange-800' : '' }}">
+                                    {{ ucfirst(str_replace('-', ' ', $schedule->session_time ?? 'N/A')) }}
+                                </span>
+                            </dd>
                         </div>
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Time</dt>
                             <dd class="mt-1 text-sm text-gray-900">
-                                {{ $schedule->shift->start_time ?? 'N/A' }} - {{ $schedule->shift->end_time ?? 'N/A' }}
+                                {{ $schedule->session_time_range }}
                             </dd>
                         </div>
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Client</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $schedule->shift->client->name ?? 'N/A' }}</dd>
+                            <dd class="mt-1 text-sm text-gray-900">{{ $schedule->client->name ?? 'N/A' }}</dd>
                         </div>
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Location</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $schedule->shift->location ?? 'N/A' }}</dd>
+                            <dd class="mt-1 text-sm text-gray-900">{{ $schedule->client->address ?? 'N/A' }}</dd>
                         </div>
                     </dl>
 
@@ -123,13 +130,13 @@
                         <div class="space-y-4">
                             <div class="grid grid-cols-2 gap-4">
                                 <div>
-                                    <dt class="text-sm font-medium text-gray-500">Clock In</dt>
-                                    <dd class="mt-1 text-sm text-gray-900">{{ $schedule->attendance->clock_in->format('h:i A') }}</dd>
+                                    <dt class="text-sm font-medium text-gray-500">Check In</dt>
+                                    <dd class="mt-1 text-sm text-gray-900">{{ $schedule->attendance->check_in ? $schedule->attendance->check_in->format('h:i A') : 'N/A' }}</dd>
                                 </div>
                                 <div>
-                                    <dt class="text-sm font-medium text-gray-500">Clock Out</dt>
+                                    <dt class="text-sm font-medium text-gray-500">Check Out</dt>
                                     <dd class="mt-1 text-sm text-gray-900">
-                                        {{ $schedule->attendance->clock_out ? $schedule->attendance->clock_out->format('h:i A') : 'Not clocked out' }}
+                                        {{ $schedule->attendance && $schedule->attendance->check_out ? $schedule->attendance->check_out->format('h:i A') : 'Not clocked out' }}
                                     </dd>
                                 </div>
                             </div>
@@ -207,12 +214,12 @@
                         </svg>
                         <span class="ml-3 text-sm font-medium text-gray-900">View Staff Profile</span>
                     </a>
-                    <a href="{{ route('admin.shifts.edit', $schedule->shift) }}"
+                    <a href="{{ route('admin.clients.show', $schedule->client) }}"
                        class="flex items-center px-4 py-3 hover:bg-gray-50 rounded-lg transition group">
                         <svg class="w-5 h-5 text-gray-400 group-hover:text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 21V5a2 2 0 00-2-2H7a2 2 0 00-2 2v16m14 0h2m-2 0h-5m-9 0H3m2 0h5M9 7h1m-1 4h1m4-4h1m-1 4h1m-5 10v-5a1 1 0 011-1h2a1 1 0 011 1v5m-4 0h4"/>
                         </svg>
-                        <span class="ml-3 text-sm font-medium text-gray-900">View Shift Details</span>
+                        <span class="ml-3 text-sm font-medium text-gray-900">View Client Details</span>
                     </a>
                     <button @click="showDeleteModal = true"
                             class="w-full flex items-center px-4 py-3 hover:bg-red-50 rounded-lg transition group">

@@ -68,7 +68,6 @@ Route::middleware('auth')->group(function () {
     Route::get('/settings', function () {
         return redirect()->route('dashboard');
     })->name('settings');
-
 });
 
 // ============================================================================
@@ -90,6 +89,8 @@ Route::middleware(['auth', 'check.user.type:admin'])->prefix('admin')->name('adm
     Route::resource('shifts', ShiftController::class);
 
     // Schedules Management (CRUD)
+    Route::get('/schedules/print', [ScheduleController::class, 'printView'])->name('schedules.print');
+    Route::get('/schedules/weekly', [ScheduleController::class, 'weeklyOverview'])->name('schedules.weekly');
     Route::resource('schedules', ScheduleController::class);
 
     // Departments Management (CRUD)
@@ -110,8 +111,8 @@ Route::middleware(['auth', 'check.user.type:admin'])->prefix('admin')->name('adm
         Route::get('/{qrCode}/download', [QrCodeController::class, 'download'])->name('download');
         Route::get('/{qrCode}/print', [QrCodeController::class, 'print'])->name('print');
         Route::post('/{qrCode}/generate', [QrCodeController::class, 'generate'])->name('generate');
-        Route::post('/{qrCode}/activate', [QrCodeController::class, 'activate'])->name('activate');
-        Route::post('/{qrCode}/deactivate', [QrCodeController::class, 'deactivate'])->name('deactivate');
+        Route::patch('/{qrCode}/activate', [QrCodeController::class, 'activate'])->name('activate');
+        Route::patch('/{qrCode}/deactivate', [QrCodeController::class, 'deactivate'])->name('deactivate');
         Route::get('/{qrCode}/edit', [QrCodeController::class, 'edit'])->name('edit');
         Route::put('/{qrCode}', [QrCodeController::class, 'update'])->name('update');
         Route::delete('/{qrCode}', [QrCodeController::class, 'destroy'])->name('destroy');
@@ -125,7 +126,6 @@ Route::middleware(['auth', 'check.user.type:admin'])->prefix('admin')->name('adm
         Route::get('/schedules', [ReportController::class, 'schedules'])->name('schedules');
         Route::post('/export', [ReportController::class, 'export'])->name('export');
     });
-
 });
 
 // ============================================================================
@@ -161,7 +161,6 @@ Route::middleware(['auth', 'check.user.type:instructor,office_staff'])->prefix('
     Route::get('/clients', [AttendanceController::class, 'myClients'])
         ->middleware('check.user.type:instructor')
         ->name('my-clients');
-
 });
 
 // ============================================================================

@@ -127,4 +127,26 @@ class User extends Authenticatable
     {
         return $query->where('user_type', 'office_staff');
     }
+
+    /**
+     * Generate a unique employee number with CAG- prefix
+     */
+    public static function generateEmployeeNo()
+    {
+        // Find the last employee number with CAG- prefix
+        $lastUser = self::where('employee_no', 'LIKE', 'CAG-%')
+            ->orderBy('employee_no', 'desc')
+            ->first();
+
+        if ($lastUser) {
+            // Extract the number part and increment
+            $lastNumber = (int) substr($lastUser->employee_no, 4); // Skip "CAG-"
+            $newNumber = $lastNumber + 1;
+        } else {
+            $newNumber = 1;
+        }
+
+        // Format: CAG-0001, CAG-0002, etc.
+        return 'CAG-' . str_pad($newNumber, 4, '0', STR_PAD_LEFT);
+    }
 }

@@ -51,7 +51,7 @@ return new class extends Migration
             $table->time('end_time');
             $table->enum('day_of_week', ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'])->nullable();
             $table->boolean('is_recurring')->default(false); // For recurring schedules
-            $table->enum('status', ['scheduled', 'completed', 'cancelled', 'missed'])->default('scheduled');
+            $table->enum('status', ['scheduled', 'completed', 'cancelled', 'missed', 'draft', 'pending'])->default('draft');
             $table->text('notes')->nullable();
             $table->foreignId('created_by')->constrained('users')->onDelete('cascade'); // Admin who created
             $table->timestamps();

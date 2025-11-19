@@ -78,7 +78,7 @@
                                 <option value="">Select Staff Member</option>
                                 @foreach($users as $user)
                                 <option value="{{ $user->id }}" {{ old('user_id', $schedule->user_id) == $user->id ? 'selected' : '' }}>
-                                    {{ $user->name }} ({{ $user->employee_id }})
+                                    {{ $user->full_name }} ({{ $user->employee_no }})
                                 </option>
                                 @endforeach
                             </select>
@@ -87,39 +87,64 @@
                             @enderror
                         </div>
 
-                        <!-- Shift -->
+                        <!-- Client -->
                         <div>
-                            <label for="shift_id" class="block text-sm font-medium text-gray-700 mb-2">
-                                Shift <span class="text-red-500">*</span>
+                            <label for="client_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                Client <span class="text-red-500">*</span>
                             </label>
-                            <select name="shift_id"
-                                    id="shift_id"
+                            <select name="client_id"
+                                    id="client_id"
                                     required
-                                    class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('shift_id') border-red-500 @enderror">
-                                <option value="">Select Shift</option>
-                                @foreach($shifts as $shift)
-                                <option value="{{ $shift->id }}" {{ old('shift_id', $schedule->shift_id) == $shift->id ? 'selected' : '' }}>
-                                    {{ $shift->name }} ({{ $shift->start_time }} - {{ $shift->end_time }})
+                                    class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('client_id') border-red-500 @enderror">
+                                <option value="">Select Client</option>
+                                @foreach($clients as $client)
+                                <option value="{{ $client->id }}" {{ old('client_id', $schedule->client_id) == $client->id ? 'selected' : '' }}>
+                                    {{ $client->name }}
                                 </option>
                                 @endforeach
                             </select>
-                            @error('shift_id')
+                            @error('client_id')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
+                        <!-- Session -->
+                        <div>
+                            <label for="session_time" class="block text-sm font-medium text-gray-700 mb-2">
+                                Session <span class="text-red-500">*</span>
+                            </label>
+                            <select name="session_time"
+                                    id="session_time"
+                                    required
+                                    class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('session_time') border-red-500 @enderror">
+                                <option value="">Select Session</option>
+                                <option value="morning" {{ old('session_time', $schedule->session_time) == 'morning' ? 'selected' : '' }}>
+                                    Morning Session (8:30 AM - 10:00 AM)
+                                </option>
+                                <option value="mid-morning" {{ old('session_time', $schedule->session_time) == 'mid-morning' ? 'selected' : '' }}>
+                                    Mid-Morning Session (10:30 AM - 12:00 PM)
+                                </option>
+                                <option value="afternoon" {{ old('session_time', $schedule->session_time) == 'afternoon' ? 'selected' : '' }}>
+                                    Afternoon Session (12:30 PM - 2:00 PM)
+                                </option>
+                            </select>
+                            @error('session_time')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
 
                         <!-- Date -->
                         <div>
-                            <label for="date" class="block text-sm font-medium text-gray-700 mb-2">
-                                Date <span class="text-red-500">*</span>
+                            <label for="scheduled_date" class="block text-sm font-medium text-gray-700 mb-2">
+                                Scheduled Date <span class="text-red-500">*</span>
                             </label>
                             <input type="date"
-                                   name="date"
-                                   id="date"
-                                   value="{{ old('date', $schedule->date->format('Y-m-d')) }}"
+                                   name="scheduled_date"
+                                   id="scheduled_date"
+                                   value="{{ old('scheduled_date', $schedule->scheduled_date ? $schedule->scheduled_date->format('Y-m-d') : '') }}"
                                    required
-                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('date') border-red-500 @enderror">
-                            @error('date')
+                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('scheduled_date') border-red-500 @enderror">
+                            @error('scheduled_date')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>

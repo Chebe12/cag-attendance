@@ -513,13 +513,14 @@ class AttendanceController extends Controller
             ->upcoming()
             ->count();
 
-        // Get today's schedule
-        $todaySchedule = Schedule::where('user_id', $user->id)
+        // Get ALL today's schedules (can have multiple client visits in a day)
+        $todaySchedules = Schedule::where('user_id', $user->id)
             ->today()
             ->with(['client', 'shift'])
-            ->first();
+            ->orderBy('start_time')
+            ->get();
 
-        return view('staff.attendance.schedule', compact('schedules', 'userClients', 'upcomingCount', 'todaySchedule'));
+        return view('staff.attendance.schedule', compact('schedules', 'userClients', 'upcomingCount', 'todaySchedules'));
     }
 
     /**

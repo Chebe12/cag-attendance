@@ -49,9 +49,16 @@ class DashboardController extends Controller
             ->where('status', 'scheduled')
             ->count();
 
+        // Get new users this month
+        $newUsersThisMonth = User::whereIn('user_type', ['instructor', 'office_staff'])
+            ->whereYear('created_at', now()->year)
+            ->whereMonth('created_at', now()->month)
+            ->count();
+
         // Get recent attendances (last 10 records with user and schedule info)
-        $recentAttendances = Attendance::with(['user', 'schedule', 'shift'])
+        $recentAttendances = Attendance::with(['user', 'schedule.client', 'shift'])
             ->latest('attendance_date')
+            ->latest('check_in')
             ->take(10)
             ->get();
 
@@ -68,14 +75,26 @@ class DashboardController extends Controller
         // Get staff statistics by user type
         $staffStatistics = $this->getStaffStatistics();
 
+        // Prepare stats array for the view
+        $stats = [
+            'total_users' => $totalUsers,
+            'today_attendance' => $todayAttendanceCount,
+            'total_clients' => $totalClients,
+            'today_schedules' => $todaySchedulesCount,
+            'new_users_this_month' => $newUsersThisMonth,
+        ];
+
+        // Prepare chart data in the format expected by the view
+        $chartData = [
+            'labels' => $attendanceChartData['dates'],
+            'data' => $attendanceChartData['counts'],
+        ];
+
         return view('admin.dashboard', compact(
-            'totalUsers',
-            'todayAttendanceCount',
-            'totalClients',
-            'todaySchedulesCount',
+            'stats',
             'recentAttendances',
             'todaySchedules',
-            'attendanceChartData',
+            'chartData',
             'staffStatistics'
         ));
     }

@@ -24,7 +24,7 @@
     view: '{{ request('view', 'list') }}',
     filters: {
         search: '{{ request('search') }}',
-        shift: '{{ request('shift') }}',
+        session: '{{ request('session') }}',
         user: '{{ request('user') }}',
         date: '{{ request('date') }}'
     },
@@ -36,14 +36,14 @@
     applyFilters() {
         const params = new URLSearchParams();
         if (this.filters.search) params.append('search', this.filters.search);
-        if (this.filters.shift) params.append('shift', this.filters.shift);
+        if (this.filters.session) params.append('session', this.filters.session);
         if (this.filters.user) params.append('user', this.filters.user);
         if (this.filters.date) params.append('date', this.filters.date);
         params.append('view', this.view);
         window.location.href = '{{ route('admin.schedules.index') }}?' + params.toString();
     },
     clearFilters() {
-        this.filters = { search: '', shift: '', user: '', date: '' };
+        this.filters = { search: '', session: '', user: '', date: '' };
         window.location.href = '{{ route('admin.schedules.index') }}?view=' + this.view;
     }
 }">
@@ -72,6 +72,22 @@
                         </svg>
                     </button>
                 </div>
+
+                <a href="{{ route('admin.schedules.print') }}"
+                   class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17 17h2a2 2 0 002-2v-4a2 2 0 00-2-2H5a2 2 0 00-2 2v4a2 2 0 002 2h2m2 4h6a2 2 0 002-2v-4a2 2 0 00-2-2H9a2 2 0 00-2 2v4a2 2 0 002 2zm8-12V5a2 2 0 00-2-2H9a2 2 0 00-2 2v4h10z"/>
+                    </svg>
+                    Print Schedules
+                </a>
+
+                <a href="{{ route('admin.schedules.weekly') }}"
+                   class="inline-flex items-center px-4 py-2 bg-purple-600 hover:bg-purple-700 text-white font-medium rounded-lg transition">
+                    <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2m-3 7h3m-3 4h3m-6-4h.01M9 16h.01"/>
+                    </svg>
+                    Weekly Overview
+                </a>
 
                 <a href="{{ route('admin.schedules.create') }}"
                    class="inline-flex items-center px-4 py-2 bg-gradient-to-r from-green-600 to-green-700 hover:from-green-700 hover:to-green-800 text-white font-semibold rounded-lg shadow-md transition duration-150 ease-in-out">
@@ -105,15 +121,15 @@
                     </div>
                 </div>
 
-                <!-- Shift filter -->
+                <!-- Session filter -->
                 <div>
-                    <label for="shift" class="block text-sm font-medium text-gray-700 mb-2">Shift</label>
-                    <select x-model="filters.shift"
+                    <label for="session" class="block text-sm font-medium text-gray-700 mb-2">Session</label>
+                    <select x-model="filters.session"
                             class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
-                        <option value="">All Shifts</option>
-                        @foreach($shifts ?? [] as $shift)
-                        <option value="{{ $shift->id }}">{{ $shift->name }}</option>
-                        @endforeach
+                        <option value="">All Sessions</option>
+                        <option value="morning">Morning</option>
+                        <option value="mid-morning">Mid-Morning</option>
+                        <option value="afternoon">Afternoon</option>
                     </select>
                 </div>
 
@@ -124,7 +140,7 @@
                             class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
                         <option value="">All Staff</option>
                         @foreach($users ?? [] as $user)
-                        <option value="{{ $user->id }}">{{ $user->name }}</option>
+                        <option value="{{ $user->id }}">{{ $user->full_name }}</option>
                         @endforeach
                     </select>
                 </div>
@@ -166,7 +182,7 @@
                     <thead class="bg-gray-50">
                         <tr>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Staff Member</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Shift</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Session</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Date</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Time</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase tracking-wider">Client</th>
@@ -180,27 +196,30 @@
                                 <div class="flex items-center">
                                     <div class="flex-shrink-0 h-8 w-8">
                                         <div class="h-8 w-8 rounded-full bg-gradient-to-br from-green-400 to-orange-500 flex items-center justify-center text-white font-semibold text-sm">
-                                            {{ substr($schedule->user->name ?? 'N', 0, 1) }}
+                                            {{ substr($schedule->user->full_name ?? 'N', 0, 1) }}
                                         </div>
                                     </div>
                                     <div class="ml-3">
-                                        <div class="text-sm font-medium text-gray-900">{{ $schedule->user->name ?? 'N/A' }}</div>
+                                        <div class="text-sm font-medium text-gray-900">{{ $schedule->user->full_name ?? 'N/A' }}</div>
                                     </div>
                                 </div>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap">
-                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium bg-green-100 text-green-800">
-                                    {{ $schedule->shift->name ?? 'N/A' }}
+                                <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
+                                    {{ $schedule->session_time == 'morning' ? 'bg-blue-100 text-blue-800' : '' }}
+                                    {{ $schedule->session_time == 'mid-morning' ? 'bg-purple-100 text-purple-800' : '' }}
+                                    {{ $schedule->session_time == 'afternoon' ? 'bg-orange-100 text-orange-800' : '' }}">
+                                    {{ ucfirst(str_replace('-', ' ', $schedule->session_time ?? 'N/A')) }}
                                 </span>
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                                {{ $schedule->date->format('M d, Y') ?? 'N/A' }}
+                                {{ $schedule->scheduled_date ? $schedule->scheduled_date->format('M d, Y') : 'N/A' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $schedule->shift->start_time ?? 'N/A' }} - {{ $schedule->shift->end_time ?? 'N/A' }}
+                                {{ $schedule->session_time_range }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
-                                {{ $schedule->shift->client->name ?? 'N/A' }}
+                                {{ $schedule->client->name ?? 'N/A' }}
                             </td>
                             <td class="px-6 py-4 whitespace-nowrap text-right text-sm font-medium">
                                 <div class="flex items-center justify-end space-x-2">
@@ -219,7 +238,7 @@
                                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M11 5H6a2 2 0 00-2 2v11a2 2 0 002 2h11a2 2 0 002-2v-5m-1.414-9.414a2 2 0 112.828 2.828L11.828 15H9v-2.828l8.586-8.586z"/>
                                         </svg>
                                     </a>
-                                    <button @click="confirmDelete({{ $schedule->id }}, '{{ $schedule->user->name ?? 'Schedule' }}')"
+                                    <button @click="confirmDelete({{ $schedule->id }}, '{{ $schedule->user->full_name ?? 'Schedule' }}')"
                                             class="text-red-600 hover:text-red-900 transition"
                                             title="Delete">
                                         <svg class="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

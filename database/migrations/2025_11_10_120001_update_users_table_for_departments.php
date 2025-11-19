@@ -12,8 +12,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('users', function (Blueprint $table) {
-            // Add department_id column
-            $table->foreignId('department_id')->nullable()->after('avatar')->constrained()->onDelete('set null');
+            // Add department_id column after phone if it doesn't exist
+            if (!Schema::hasColumn('users', 'department_id')) {
+                $table->foreignId('department_id')->nullable()->after('phone')->constrained()->onDelete('set null');
+            }
         });
     }
 

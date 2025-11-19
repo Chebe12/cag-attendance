@@ -74,18 +74,18 @@
                         <!-- Client Code -->
                         <div>
                             <label for="code" class="block text-sm font-medium text-gray-700 mb-2">
-                                Client Code <span class="text-red-500">*</span>
+                                Client Code <span class="text-gray-400">(Optional)</span>
                             </label>
                             <input type="text"
                                    name="code"
                                    id="code"
                                    value="{{ old('code') }}"
-                                   required
+                                   placeholder="Leave empty to auto-generate"
                                    class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('code') border-red-500 @enderror">
                             @error('code')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
-                            <p class="mt-1 text-xs text-gray-500">Unique identifier for the client</p>
+                            <p class="mt-1 text-xs text-gray-500">Auto-generated from client name if left empty</p>
                         </div>
 
                         <!-- Status -->

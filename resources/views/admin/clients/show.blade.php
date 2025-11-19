@@ -211,7 +211,7 @@
                                 <p class="text-xs text-gray-500">Active staff</p>
                             </div>
                         </div>
-                        <span class="text-2xl font-bold text-gray-900">{{ $client->staff_count ?? 0 }}</span>
+                        <span class="text-2xl font-bold text-gray-900">{{ $staffCount ?? 0 }}</span>
                     </div>
                 </div>
             </div>
@@ -229,19 +229,26 @@
                         </svg>
                         <span class="ml-3 text-sm font-medium text-gray-900">Edit Client Info</span>
                     </a>
-                    <a href="#"
+                    <a href="{{ route('admin.shifts.create', ['client_id' => $client->id]) }}"
                        class="flex items-center px-4 py-3 hover:bg-gray-50 rounded-lg transition group">
                         <svg class="w-5 h-5 text-gray-400 group-hover:text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         <span class="ml-3 text-sm font-medium text-gray-900">Create New Shift</span>
                     </a>
-                    <a href="#"
+                    <a href="{{ route('admin.shifts.index', ['client_id' => $client->id]) }}"
                        class="flex items-center px-4 py-3 hover:bg-gray-50 rounded-lg transition group">
                         <svg class="w-5 h-5 text-gray-400 group-hover:text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 19v-6a2 2 0 00-2-2H5a2 2 0 00-2 2v6a2 2 0 002 2h2a2 2 0 002-2zm0 0V9a2 2 0 012-2h2a2 2 0 012 2v10m-6 0a2 2 0 002 2h2a2 2 0 002-2m0 0V5a2 2 0 012-2h2a2 2 0 012 2v14a2 2 0 01-2 2h-2a2 2 0 01-2-2z"/>
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
-                        <span class="ml-3 text-sm font-medium text-gray-900">View Reports</span>
+                        <span class="ml-3 text-sm font-medium text-gray-900">View All Shifts</span>
+                    </a>
+                    <a href="{{ route('admin.schedules.index', ['client_id' => $client->id]) }}"
+                       class="flex items-center px-4 py-3 hover:bg-gray-50 rounded-lg transition group">
+                        <svg class="w-5 h-5 text-gray-400 group-hover:text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
+                        </svg>
+                        <span class="ml-3 text-sm font-medium text-gray-900">View Schedules</span>
                     </a>
                     <button @click="showDeleteModal = true"
                             class="w-full flex items-center px-4 py-3 hover:bg-red-50 rounded-lg transition group">

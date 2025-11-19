@@ -21,7 +21,19 @@
 @endsection
 
 @section('content')
-<div x-data="{ isRecurring: {{ old('is_recurring', false) ? 'true' : 'false' }} }">
+<div x-data="{
+    isRecurring: '{{ old('is_recurring', '0') }}'
+}" x-init="$watch('isRecurring', value => {
+    // Reset fields when switching types
+    if (value === '0') {
+        document.getElementById('day_of_week').value = '';
+    } else {
+        document.getElementById('scheduled_date').value = '';
+    }
+})">
+    <style>
+        [x-cloak] { display: none !important; }
+    </style>
     <!-- Page header -->
     <div class="mb-8">
         <div class="flex items-center justify-between">
@@ -55,16 +67,16 @@
                     </h3>
 
                     <div class="flex items-center space-x-4">
-                        <label class="inline-flex items-center">
+                        <label class="inline-flex items-center cursor-pointer">
                             <input type="radio" name="is_recurring" value="0" x-model="isRecurring"
                                    class="form-radio text-green-600 focus:ring-green-500"
-                                   {{ old('is_recurring', false) ? '' : 'checked' }}>
+                                   {{ old('is_recurring', '0') === '0' ? 'checked' : '' }}>
                             <span class="ml-2">One-time Schedule</span>
                         </label>
-                        <label class="inline-flex items-center">
+                        <label class="inline-flex items-center cursor-pointer">
                             <input type="radio" name="is_recurring" value="1" x-model="isRecurring"
                                    class="form-radio text-green-600 focus:ring-green-500"
-                                   {{ old('is_recurring') ? 'checked' : '' }}>
+                                   {{ old('is_recurring') === '1' ? 'checked' : '' }}>
                             <span class="ml-2">Weekly Recurring</span>
                         </label>
                     </div>
@@ -122,50 +134,55 @@
                             @enderror
                         </div>
 
-                        <!-- Shift -->
+                        <!-- Session -->
                         <div>
-                            <label for="shift_id" class="block text-sm font-medium text-gray-700 mb-2">
-                                Shift <span class="text-red-500">*</span>
+                            <label for="session_time" class="block text-sm font-medium text-gray-700 mb-2">
+                                Session <span class="text-red-500">*</span>
                             </label>
-                            <select name="shift_id"
-                                    id="shift_id"
+                            <select name="session_time"
+                                    id="session_time"
                                     required
-                                    class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('shift_id') border-red-500 @enderror">
-                                <option value="">Select Shift</option>
-                                @foreach($shifts as $shift)
-                                <option value="{{ $shift->id }}" {{ old('shift_id') == $shift->id ? 'selected' : '' }}>
-                                    {{ $shift->name }} ({{ $shift->start_time }} - {{ $shift->end_time }})
+                                    class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('session_time') border-red-500 @enderror">
+                                <option value="">Select Session</option>
+                                <option value="morning" {{ old('session_time') == 'morning' ? 'selected' : '' }}>
+                                    Morning Session (8:30 AM - 10:00 AM)
                                 </option>
-                                @endforeach
+                                <option value="mid-morning" {{ old('session_time') == 'mid-morning' ? 'selected' : '' }}>
+                                    Mid-Morning Session (10:30 AM - 12:00 PM)
+                                </option>
+                                <option value="afternoon" {{ old('session_time') == 'afternoon' ? 'selected' : '' }}>
+                                    Afternoon Session (12:30 PM - 2:00 PM)
+                                </option>
                             </select>
-                            @error('shift_id')
+                            @error('session_time')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
 
                         <!-- Date (One-time) / Day of Week (Recurring) -->
-                        <div x-show="!isRecurring">
+                        <div x-show="isRecurring === '0'" x-cloak>
                             <label for="scheduled_date" class="block text-sm font-medium text-gray-700 mb-2">
                                 Scheduled Date <span class="text-red-500">*</span>
                             </label>
                             <input type="date"
                                    name="scheduled_date"
                                    id="scheduled_date"
-                                   value="{{ old('scheduled_date') }}"
-                                   :required="!isRecurring"
+                                   value="{{ old('scheduled_date', date('Y-m-d')) }}"
+                                   min="{{ date('Y-m-d') }}"
+                                   :required="isRecurring === '0'"
                                    class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('scheduled_date') border-red-500 @enderror">
                             @error('scheduled_date')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>
 
-                        <div x-show="isRecurring">
+                        <div x-show="isRecurring === '1'" x-cloak>
                             <label for="day_of_week" class="block text-sm font-medium text-gray-700 mb-2">
                                 Day of Week <span class="text-red-500">*</span>
                             </label>
                             <select name="day_of_week"
                                     id="day_of_week"
-                                    :required="isRecurring"
+                                    :required="isRecurring === '1'"
                                     class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('day_of_week') border-red-500 @enderror">
                                 <option value="">Select Day</option>
                                 <option value="monday" {{ old('day_of_week') == 'monday' ? 'selected' : '' }}>Monday</option>
@@ -177,56 +194,6 @@
                                 <option value="sunday" {{ old('day_of_week') == 'sunday' ? 'selected' : '' }}>Sunday</option>
                             </select>
                             @error('day_of_week')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <!-- Session Time (for recurring) -->
-                        <div x-show="isRecurring">
-                            <label for="session_time" class="block text-sm font-medium text-gray-700 mb-2">
-                                Session Time
-                            </label>
-                            <select name="session_time"
-                                    id="session_time"
-                                    class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('session_time') border-red-500 @enderror">
-                                <option value="">Select Session</option>
-                                <option value="morning" {{ old('session_time') == 'morning' ? 'selected' : '' }}>Morning</option>
-                                <option value="mid-morning" {{ old('session_time') == 'mid-morning' ? 'selected' : '' }}>Mid-Morning</option>
-                                <option value="afternoon" {{ old('session_time') == 'afternoon' ? 'selected' : '' }}>Afternoon</option>
-                            </select>
-                            @error('session_time')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <!-- Start Time -->
-                        <div>
-                            <label for="start_time" class="block text-sm font-medium text-gray-700 mb-2">
-                                Start Time <span class="text-red-500">*</span>
-                            </label>
-                            <input type="time"
-                                   name="start_time"
-                                   id="start_time"
-                                   value="{{ old('start_time') }}"
-                                   required
-                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('start_time') border-red-500 @enderror">
-                            @error('start_time')
-                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
-                            @enderror
-                        </div>
-
-                        <!-- End Time -->
-                        <div>
-                            <label for="end_time" class="block text-sm font-medium text-gray-700 mb-2">
-                                End Time <span class="text-red-500">*</span>
-                            </label>
-                            <input type="time"
-                                   name="end_time"
-                                   id="end_time"
-                                   value="{{ old('end_time') }}"
-                                   required
-                                   class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('end_time') border-red-500 @enderror">
-                            @error('end_time')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
                         </div>

@@ -27,7 +27,7 @@
         <div class="flex items-center justify-between">
             <div class="flex items-center">
                 <div class="h-16 w-16 rounded-full bg-gradient-to-br from-green-400 to-orange-500 flex items-center justify-center text-white font-bold text-2xl shadow-lg">
-                    {{ substr($user->name, 0, 1) }}
+                    {{ substr($user->firstname, 0, 1) }}
                 </div>
                 <div class="ml-4">
                     <h1 class="text-3xl font-bold text-gray-900">{{ $user->full_name }}</h1>
@@ -93,7 +93,15 @@
                         </div>
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Department</dt>
-                            <dd class="mt-1 text-sm text-gray-900">{{ $user->department ? $user->department->name : 'N/A' }}</dd>
+                            <dd class="mt-1 text-sm text-gray-900">
+                                @if($user->department_id && $user->getRelation('department'))
+                                    {{ $user->getRelation('department')->name }}
+                                @elseif($user->department)
+                                    {{ $user->department }}
+                                @else
+                                    N/A
+                                @endif
+                            </dd>
                         </div>
                         <div>
                             <dt class="text-sm font-medium text-gray-500">Position</dt>
@@ -133,13 +141,13 @@
                                         </div>
                                         <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
                                             <div>
-                                                <p class="text-sm text-gray-900">Clock In: <span class="font-medium">{{ $attendance->clock_in->format('h:i A') }}</span></p>
-                                                @if($attendance->clock_out)
-                                                <p class="text-sm text-gray-500">Clock Out: <span class="font-medium">{{ $attendance->clock_out->format('h:i A') }}</span></p>
+                                                <p class="text-sm text-gray-900">Check In: <span class="font-medium">{{ $attendance->check_in->format('h:i A') }}</span></p>
+                                                @if($attendance->check_out)
+                                                <p class="text-sm text-gray-500">Check Out: <span class="font-medium">{{ $attendance->check_out->format('h:i A') }}</span></p>
                                                 @endif
                                             </div>
                                             <div class="text-right text-sm whitespace-nowrap text-gray-500">
-                                                {{ $attendance->date->format('M d, Y') }}
+                                                {{ $attendance->attendance_date->format('M d, Y') }}
                                             </div>
                                         </div>
                                     </div>

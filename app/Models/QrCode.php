@@ -2,6 +2,7 @@
 
 namespace App\Models;
 
+use Carbon\Carbon;
 use Illuminate\Database\Eloquent\Factories\HasFactory;
 use Illuminate\Database\Eloquent\Model;
 
@@ -53,14 +54,22 @@ class QrCode extends Model
             return false;
         }
 
-        $today = now()->toDateString();
+        $today = Carbon::today();
 
-        if ($this->valid_from && $this->valid_from > $today) {
-            return false;
+        // Check if valid_from is in the future
+        if ($this->valid_from) {
+            $validFrom = Carbon::parse($this->valid_from)->startOfDay();
+            if ($validFrom->greaterThan($today)) {
+                return false;
+            }
         }
 
-        if ($this->valid_until && $this->valid_until < $today) {
-            return false;
+        // Check if valid_until is in the past
+        if ($this->valid_until) {
+            $validUntil = Carbon::parse($this->valid_until)->endOfDay();
+            if ($validUntil->lessThan($today)) {
+                return false;
+            }
         }
 
         return true;

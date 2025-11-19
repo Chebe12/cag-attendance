@@ -123,18 +123,18 @@
                         <!-- Employee Number -->
                         <div>
                             <label for="employee_no" class="block text-sm font-medium text-gray-700 mb-2">
-                                Employee Number <span class="text-red-500">*</span>
+                                Employee Number <span class="text-gray-400">(Optional)</span>
                             </label>
                             <input type="text"
                                    name="employee_no"
                                    id="employee_no"
                                    value="{{ old('employee_no') }}"
-                                   required
-                                   placeholder="e.g., EMP001"
+                                   placeholder="Leave empty to auto-generate (CAG-####)"
                                    class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('employee_no') border-red-500 @enderror">
                             @error('employee_no')
                                 <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
                             @enderror
+                            <p class="mt-1 text-xs text-gray-500">Auto-generated with CAG- prefix if left empty</p>
                         </div>
 
                         <!-- Phone -->
