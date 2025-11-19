@@ -92,6 +92,27 @@
                     </h3>
 
                     <div class="grid grid-cols-1 md:grid-cols-2 gap-6">
+                        <!-- Schedule Category (for Weekly Recurring) -->
+                        <div x-show="isRecurring === '1'" x-cloak class="md:col-span-2">
+                            <label for="category_id" class="block text-sm font-medium text-gray-700 mb-2">
+                                Schedule Category <span class="text-red-500">*</span>
+                            </label>
+                            <select name="category_id"
+                                    id="category_id"
+                                    :required="isRecurring === '1'"
+                                    class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('category_id') border-red-500 @enderror">
+                                <option value="">Select Schedule Category</option>
+                                @foreach($categories as $category)
+                                <option value="{{ $category->id }}" {{ old('category_id') == $category->id ? 'selected' : '' }}>
+                                    {{ $category->name }} ({{ $category->start_date->format('M d, Y') }} - {{ $category->end_date->format('M d, Y') }})
+                                </option>
+                                @endforeach
+                            </select>
+                            @error('category_id')
+                                <p class="mt-1 text-sm text-red-600">{{ $message }}</p>
+                            @enderror
+                        </div>
+
                         <!-- Staff Member -->
                         <div>
                             <label for="user_id" class="block text-sm font-medium text-gray-700 mb-2">

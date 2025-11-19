@@ -4,7 +4,13 @@
 <div class="max-w-7xl mx-auto px-4 sm:px-6 lg:px-8 py-8">
     <div class="mb-6">
         <h1 class="text-3xl font-bold text-gray-900">My Schedule</h1>
-        <p class="mt-2 text-sm text-gray-600">View your upcoming client visits and assignments</p>
+        <p class="mt-2 text-sm text-gray-600">View your weekly recurring schedule</p>
+        @if($activeCategory ?? null)
+            <p class="mt-1 text-xs text-gray-500">
+                Current Term: <span class="font-semibold">{{ $activeCategory->name }}</span>
+                ({{ $activeCategory->start_date->format('M d, Y') }} - {{ $activeCategory->end_date->format('M d, Y') }})
+            </p>
+        @endif
     </div>
 
     @if($todaySchedules && $todaySchedules->count() > 0)
@@ -37,14 +43,17 @@
     <div class="bg-white rounded-lg shadow p-4 mb-6">
         <form method="GET" class="grid grid-cols-1 md:grid-cols-4 gap-4">
             <div>
-                <label class="block text-sm font-medium text-gray-700">From Date</label>
-                <input type="date" name="from_date" value="{{ request('from_date') }}" 
-                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
-            </div>
-            <div>
-                <label class="block text-sm font-medium text-gray-700">To Date</label>
-                <input type="date" name="to_date" value="{{ request('to_date') }}" 
-                       class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
+                <label class="block text-sm font-medium text-gray-700">Day of Week</label>
+                <select name="day_of_week" class="mt-1 block w-full rounded-md border-gray-300 shadow-sm focus:border-green-500 focus:ring-green-500">
+                    <option value="">All Days</option>
+                    <option value="monday" {{ request('day_of_week') == 'monday' ? 'selected' : '' }}>Monday</option>
+                    <option value="tuesday" {{ request('day_of_week') == 'tuesday' ? 'selected' : '' }}>Tuesday</option>
+                    <option value="wednesday" {{ request('day_of_week') == 'wednesday' ? 'selected' : '' }}>Wednesday</option>
+                    <option value="thursday" {{ request('day_of_week') == 'thursday' ? 'selected' : '' }}>Thursday</option>
+                    <option value="friday" {{ request('day_of_week') == 'friday' ? 'selected' : '' }}>Friday</option>
+                    <option value="saturday" {{ request('day_of_week') == 'saturday' ? 'selected' : '' }}>Saturday</option>
+                    <option value="sunday" {{ request('day_of_week') == 'sunday' ? 'selected' : '' }}>Sunday</option>
+                </select>
             </div>
             <div>
                 <label class="block text-sm font-medium text-gray-700">Client</label>
@@ -67,12 +76,14 @@
                     <option value="missed" {{ request('status') == 'missed' ? 'selected' : '' }}>Missed</option>
                 </select>
             </div>
-            <div class="md:col-span-4 flex gap-2">
-                <button type="submit" class="px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
+            <div class="flex items-end">
+                <button type="submit" class="w-full px-4 py-2 bg-green-600 hover:bg-green-700 text-white rounded-lg">
                     Apply Filters
                 </button>
-                <a href="{{ route('staff.schedules.index') }}" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg">
-                    Clear
+            </div>
+            <div class="md:col-span-4">
+                <a href="{{ route('staff.schedules.index') }}" class="px-4 py-2 bg-gray-200 hover:bg-gray-300 text-gray-700 rounded-lg inline-block">
+                    Clear Filters
                 </a>
             </div>
         </form>
@@ -85,41 +96,43 @@
                 <table class="min-w-full divide-y divide-gray-200">
                     <thead class="bg-gray-50">
                         <tr>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Date</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Day</th>
+                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Session</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Client</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Time</th>
                             <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Location</th>
-                            <th class="px-6 py-3 text-left text-xs font-medium text-gray-500 uppercase">Status</th>
                         </tr>
                     </thead>
                     <tbody class="bg-white divide-y divide-gray-200">
                         @foreach($schedules as $schedule)
                             <tr>
+                                <td class="px-6 py-4 whitespace-nowrap font-medium text-gray-900">
+                                    {{ ucfirst($schedule->day_of_week) }}
+                                </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    {{ $schedule->scheduled_date->format('M d, Y') }}
+                                    @php
+                                        $sessionColors = [
+                                            'morning' => 'bg-blue-100 text-blue-800',
+                                            'mid-morning' => 'bg-purple-100 text-purple-800',
+                                            'afternoon' => 'bg-orange-100 text-orange-800',
+                                        ];
+                                    @endphp
+                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $sessionColors[$schedule->session_time] ?? 'bg-gray-100 text-gray-800' }}">
+                                        {{ ucfirst(str_replace('-', ' ', $schedule->session_time)) }}
+                                    </span>
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap font-medium">
                                     {{ $schedule->client->name }}
                                 </td>
                                 <td class="px-6 py-4 whitespace-nowrap">
-                                    {{ date('g:i A', strtotime($schedule->start_time)) }} - {{ date('g:i A', strtotime($schedule->end_time)) }}
+                                    @php
+                                        $times = \App\Models\Schedule::getSessionTimes($schedule->session_time);
+                                    @endphp
+                                    {{ date('g:i A', strtotime($times['start'])) }} - {{ date('g:i A', strtotime($times['end'])) }}
                                 </td>
                                 <td class="px-6 py-4">
                                     <div class="text-sm text-gray-900">{{ $schedule->client->address ?? 'N/A' }}</div>
                                     <div class="text-sm text-gray-500">{{ $schedule->client->city }}, {{ $schedule->client->state }}</div>
-                                </td>
-                                <td class="px-6 py-4 whitespace-nowrap">
-                                    @php
-                                        $statusColors = [
-                                            'scheduled' => 'bg-blue-100 text-blue-800',
-                                            'completed' => 'bg-green-100 text-green-800',
-                                            'cancelled' => 'bg-red-100 text-red-800',
-                                            'missed' => 'bg-yellow-100 text-yellow-800',
-                                        ];
-                                    @endphp
-                                    <span class="px-2 inline-flex text-xs leading-5 font-semibold rounded-full {{ $statusColors[$schedule->status] ?? 'bg-gray-100 text-gray-800' }}">
-                                        {{ ucfirst($schedule->status) }}
-                                    </span>
                                 </td>
                             </tr>
                         @endforeach

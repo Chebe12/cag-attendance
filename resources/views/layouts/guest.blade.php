@@ -1,5 +1,6 @@
 <!DOCTYPE html>
 <html lang="{{ str_replace('_', '-', app()->getLocale()) }}" class="h-full">
+
 <head>
     <meta charset="utf-8">
     <meta name="viewport" content="width=device-width, initial-scale=1">
@@ -41,17 +42,31 @@
     <!-- Custom animations -->
     <style>
         @keyframes blob {
-            0% { transform: translate(0px, 0px) scale(1); }
-            33% { transform: translate(30px, -50px) scale(1.1); }
-            66% { transform: translate(-20px, 20px) scale(0.9); }
-            100% { transform: translate(0px, 0px) scale(1); }
+            0% {
+                transform: translate(0px, 0px) scale(1);
+            }
+
+            33% {
+                transform: translate(30px, -50px) scale(1.1);
+            }
+
+            66% {
+                transform: translate(-20px, 20px) scale(0.9);
+            }
+
+            100% {
+                transform: translate(0px, 0px) scale(1);
+            }
         }
+
         .animate-blob {
             animation: blob 7s infinite;
         }
+
         .animation-delay-2000 {
             animation-delay: 2s;
         }
+
         .animation-delay-4000 {
             animation-delay: 4s;
         }
@@ -59,21 +74,30 @@
 
     @stack('styles')
 </head>
+
 <body class="h-full">
     <div class="min-h-full flex">
         <!-- Left side - Branding -->
-        <div class="hidden lg:flex lg:flex-1 lg:flex-col lg:justify-center lg:px-8 bg-gradient-to-br from-green-900 via-green-800 to-green-900 relative overflow-hidden">
+        <div
+            class="hidden lg:flex lg:flex-1 lg:flex-col lg:justify-center lg:px-8 bg-gradient-to-br from-green-900 via-green-800 to-green-900 relative overflow-hidden">
             <!-- Animated background elements -->
             <div class="absolute inset-0 opacity-10">
-                <div class="absolute top-0 left-0 w-96 h-96 bg-orange-500 rounded-full mix-blend-multiply filter blur-3xl animate-blob"></div>
-                <div class="absolute top-0 right-0 w-96 h-96 bg-green-500 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000"></div>
-                <div class="absolute bottom-0 left-1/2 w-96 h-96 bg-orange-400 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000"></div>
+                <div
+                    class="absolute top-0 left-0 w-96 h-96 bg-orange-500 rounded-full mix-blend-multiply filter blur-3xl animate-blob">
+                </div>
+                <div
+                    class="absolute top-0 right-0 w-96 h-96 bg-green-500 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-2000">
+                </div>
+                <div
+                    class="absolute bottom-0 left-1/2 w-96 h-96 bg-orange-400 rounded-full mix-blend-multiply filter blur-3xl animate-blob animation-delay-4000">
+                </div>
             </div>
 
             <div class="relative z-10 max-w-md mx-auto text-center">
                 <!-- Logo -->
                 <div class="flex justify-center mb-8">
-                    <div class="w-24 h-24 bg-gradient-to-br from-green-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-2xl transform hover:scale-105 transition-transform duration-300">
+                    <div
+                        class="w-24 h-24 bg-gradient-to-br from-green-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-2xl transform hover:scale-105 transition-transform duration-300">
                         <span class="text-white font-bold text-4xl">CA</span>
                     </div>
                 </div>
@@ -87,8 +111,10 @@
                     <div class="flex items-start space-x-3">
                         <div class="flex-shrink-0">
                             <div class="w-8 h-8 bg-green-700 rounded-lg flex items-center justify-center">
-                                <svg class="w-5 h-5 text-green-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                <svg class="w-5 h-5 text-green-200" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
                         </div>
@@ -101,8 +127,10 @@
                     <div class="flex items-start space-x-3">
                         <div class="flex-shrink-0">
                             <div class="w-8 h-8 bg-green-700 rounded-lg flex items-center justify-center">
-                                <svg class="w-5 h-5 text-green-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                <svg class="w-5 h-5 text-green-200" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
                         </div>
@@ -115,8 +143,10 @@
                     <div class="flex items-start space-x-3">
                         <div class="flex-shrink-0">
                             <div class="w-8 h-8 bg-green-700 rounded-lg flex items-center justify-center">
-                                <svg class="w-5 h-5 text-green-200" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M5 13l4 4L19 7"/>
+                                <svg class="w-5 h-5 text-green-200" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M5 13l4 4L19 7" />
                                 </svg>
                             </div>
                         </div>
@@ -134,7 +164,8 @@
             <div class="mx-auto w-full max-w-sm lg:w-96">
                 <!-- Mobile logo -->
                 <div class="lg:hidden flex justify-center mb-8">
-                    <div class="w-20 h-20 bg-gradient-to-br from-green-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
+                    <div
+                        class="w-20 h-20 bg-gradient-to-br from-green-400 to-orange-500 rounded-2xl flex items-center justify-center shadow-lg">
                         <span class="text-white font-bold text-3xl">CA</span>
                     </div>
                 </div>
@@ -150,15 +181,13 @@
 
                 <!-- Flash messages -->
                 @if(session('success'))
-                <div x-data="{ show: true }"
-                     x-show="show"
-                     x-transition
-                     x-init="setTimeout(() => show = false, 5000)"
-                     class="mt-6 rounded-lg bg-green-50 p-4 border border-green-200">
+                <div x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 5000)"
+                    class="mt-6 rounded-lg bg-green-50 p-4 border border-green-200">
                     <div class="flex">
                         <div class="flex-shrink-0">
                             <svg class="h-5 w-5 text-green-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
                         <div class="ml-3">
@@ -169,15 +198,13 @@
                 @endif
 
                 @if(session('error'))
-                <div x-data="{ show: true }"
-                     x-show="show"
-                     x-transition
-                     x-init="setTimeout(() => show = false, 5000)"
-                     class="mt-6 rounded-lg bg-red-50 p-4 border border-red-200">
+                <div x-data="{ show: true }" x-show="show" x-transition x-init="setTimeout(() => show = false, 5000)"
+                    class="mt-6 rounded-lg bg-red-50 p-4 border border-red-200">
                     <div class="flex">
                         <div class="flex-shrink-0">
                             <svg class="h-5 w-5 text-red-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z"/>
+                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                    d="M12 8v4m0 4h.01M21 12a9 9 0 11-18 0 9 9 0 0118 0z" />
                             </svg>
                         </div>
                         <div class="ml-3">
@@ -205,12 +232,16 @@
 
     <style>
         @keyframes blob {
-            0%, 100% {
+
+            0%,
+            100% {
                 transform: translate(0, 0) scale(1);
             }
+
             33% {
                 transform: translate(30px, -50px) scale(1.1);
             }
+
             66% {
                 transform: translate(-20px, 20px) scale(0.9);
             }
@@ -229,4 +260,5 @@
         }
     </style>
 </body>
+
 </html>

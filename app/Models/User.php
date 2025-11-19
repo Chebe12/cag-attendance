@@ -56,6 +56,12 @@ class User extends Authenticatable
         return trim("{$this->firstname} {$this->middlename} {$this->lastname}");
     }
 
+    // Accessor for name (alias for full_name)
+    public function getNameAttribute()
+    {
+        return $this->full_name;
+    }
+
     // Check if user is admin
     public function isAdmin()
     {

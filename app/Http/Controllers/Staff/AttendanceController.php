@@ -118,12 +118,28 @@ class AttendanceController extends Controller
     {
         $user = Auth::user();
 
-        // Get ALL today's schedules for the user (can have multiple client visits)
-        $todaySchedules = Schedule::where('user_id', $user->id)
-            ->today()
-            ->with(['client', 'shift'])
-            ->orderBy('start_time')
-            ->get();
+        // Get active schedule category
+        $activeCategory = \App\Models\ScheduleCategory::where('status', 'active')
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->first();
+
+        // Get today's day of the week
+        $todayDayOfWeek = strtolower(now()->format('l'));
+
+        // Get ALL today's schedules based on day of week (can have multiple client visits)
+        $todaySchedules = collect();
+        if ($activeCategory) {
+            $todaySchedules = Schedule::where('user_id', $user->id)
+                ->where('category_id', $activeCategory->id)
+                ->where('is_recurring', true)
+                ->where('day_of_week', $todayDayOfWeek)
+                ->where('draft_status', 'published')
+                ->whereIn('status', ['scheduled', 'draft', 'pending'])
+                ->with(['client', 'shift', 'category'])
+                ->orderBy('start_time')
+                ->get();
+        }
 
         // Get all today's attendance records
         $todayAttendances = Attendance::where('user_id', $user->id)
@@ -471,56 +487,80 @@ class AttendanceController extends Controller
     {
         $user = Auth::user();
 
-        // Build query
-        $query = Schedule::where('user_id', $user->id)
-            ->with(['client', 'shift', 'creator']);
+        // Get active schedule category
+        $activeCategory = \App\Models\ScheduleCategory::where('status', 'active')
+            ->where('start_date', '<=', now())
+            ->where('end_date', '>=', now())
+            ->first();
 
-        // Filter by date range
-        if ($request->filled('from_date')) {
-            $query->whereDate('scheduled_date', '>=', $request->from_date);
-        } else {
-            // Default: show from today onwards
-            $query->whereDate('scheduled_date', '>=', now()->toDateString());
+        // Get today's day of the week
+        $todayDayOfWeek = strtolower(now()->format('l'));
+
+        // Get ALL today's schedules based on day of week (can have multiple client visits in a day)
+        $todaySchedules = collect();
+        if ($activeCategory) {
+            $todaySchedules = Schedule::where('user_id', $user->id)
+                ->where('category_id', $activeCategory->id)
+                ->where('is_recurring', true)
+                ->where('day_of_week', $todayDayOfWeek)
+                ->where('draft_status', 'published')
+                ->whereIn('status', ['scheduled', 'draft', 'pending'])
+                ->with(['client', 'shift', 'category'])
+                ->orderBy('start_time')
+                ->get();
         }
 
-        if ($request->filled('to_date')) {
-            $query->whereDate('scheduled_date', '<=', $request->to_date);
-        }
+        // Get recurring schedules for display
+        $schedules = collect();
+        if ($activeCategory) {
+            $query = Schedule::where('user_id', $user->id)
+                ->where('category_id', $activeCategory->id)
+                ->where('is_recurring', true)
+                ->where('draft_status', 'published')
+                ->with(['client', 'shift', 'creator', 'category']);
 
-        // Filter by status
-        if ($request->filled('status')) {
-            $query->where('status', $request->status);
-        }
+            // Filter by status
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
 
-        // Filter by client
-        if ($request->filled('client_id')) {
-            $query->where('client_id', $request->client_id);
-        }
+            // Filter by client
+            if ($request->filled('client_id')) {
+                $query->where('client_id', $request->client_id);
+            }
 
-        // Order by scheduled date
-        $schedules = $query->orderBy('scheduled_date')
-            ->orderBy('start_time')
-            ->paginate(15)
-            ->withQueryString();
+            // Filter by day of week if specified
+            if ($request->filled('day_of_week')) {
+                $query->where('day_of_week', $request->day_of_week);
+            }
+
+            // Order by day of week and time
+            $schedules = $query->orderByRaw("FIELD(day_of_week, 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday')")
+                ->orderBy('start_time')
+                ->paginate(15)
+                ->withQueryString();
+        }
 
         // Get user's clients for filter dropdown
-        $userClients = Client::whereHas('schedules', function($q) use ($user) {
+        $userClients = Client::whereHas('schedules', function($q) use ($user, $activeCategory) {
             $q->where('user_id', $user->id);
+            if ($activeCategory) {
+                $q->where('category_id', $activeCategory->id);
+            }
         })->active()->get();
 
-        // Get upcoming schedules count
-        $upcomingCount = Schedule::where('user_id', $user->id)
-            ->upcoming()
-            ->count();
+        // Get total recurring schedules count
+        $upcomingCount = 0;
+        if ($activeCategory) {
+            $upcomingCount = Schedule::where('user_id', $user->id)
+                ->where('category_id', $activeCategory->id)
+                ->where('is_recurring', true)
+                ->where('draft_status', 'published')
+                ->whereIn('status', ['scheduled', 'draft', 'pending'])
+                ->count();
+        }
 
-        // Get ALL today's schedules (can have multiple client visits in a day)
-        $todaySchedules = Schedule::where('user_id', $user->id)
-            ->today()
-            ->with(['client', 'shift'])
-            ->orderBy('start_time')
-            ->get();
-
-        return view('staff.attendance.schedule', compact('schedules', 'userClients', 'upcomingCount', 'todaySchedules'));
+        return view('staff.attendance.schedule', compact('schedules', 'userClients', 'upcomingCount', 'todaySchedules', 'activeCategory'));
     }
 
     /**

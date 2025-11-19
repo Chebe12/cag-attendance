@@ -30,7 +30,10 @@
                             @endif
                         </div>
                         <p class="text-sm text-gray-600">
-                            {{ date('g:i A', strtotime($schedule->start_time)) }} - {{ date('g:i A', strtotime($schedule->end_time)) }}
+                            @php
+                                $times = \App\Models\Schedule::getSessionTimes($schedule->session_time);
+                            @endphp
+                            {{ date('g:i A', strtotime($times['start'])) }} - {{ date('g:i A', strtotime($times['end'])) }}
                         </p>
                         @if($attendance)
                             <div class="mt-2 text-xs text-gray-500">
@@ -97,8 +100,11 @@
                     <option value="">-- Select Client --</option>
                     @if($todaySchedules && $todaySchedules->count() > 0)
                         @foreach($todaySchedules as $schedule)
+                            @php
+                                $times = \App\Models\Schedule::getSessionTimes($schedule->session_time);
+                            @endphp
                             <option value="{{ $schedule->id }}">
-                                {{ $schedule->client->name }} ({{ date('g:i A', strtotime($schedule->start_time)) }})
+                                {{ $schedule->client->name }} ({{ date('g:i A', strtotime($times['start'])) }})
                             </option>
                         @endforeach
                     @endif

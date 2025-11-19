@@ -10,6 +10,8 @@ use App\Http\Controllers\Admin\ScheduleController;
 use App\Http\Controllers\Admin\QrCodeController;
 use App\Http\Controllers\Admin\ReportController;
 use App\Http\Controllers\Admin\AttendanceController as AdminAttendanceController;
+use App\Http\Controllers\Admin\ScheduleCategoryController;
+use App\Http\Controllers\Admin\BulkScheduleController;
 use App\Http\Controllers\Staff\DashboardController as StaffDashboardController;
 use App\Http\Controllers\Staff\AttendanceController;
 
@@ -89,9 +91,24 @@ Route::middleware(['auth', 'check.user.type:admin'])->prefix('admin')->name('adm
     Route::resource('shifts', ShiftController::class);
 
     // Schedules Management (CRUD)
+    Route::get('/schedules/availability', [ScheduleController::class, 'availability'])->name('schedules.availability');
     Route::get('/schedules/print', [ScheduleController::class, 'printView'])->name('schedules.print');
     Route::get('/schedules/weekly', [ScheduleController::class, 'weeklyOverview'])->name('schedules.weekly');
     Route::resource('schedules', ScheduleController::class);
+
+    // Schedule Categories/Terms Management
+    Route::resource('schedule-categories', ScheduleCategoryController::class);
+    Route::patch('/schedule-categories/{scheduleCategory}/activate', [ScheduleCategoryController::class, 'activate'])->name('schedule-categories.activate');
+    Route::patch('/schedule-categories/{scheduleCategory}/archive', [ScheduleCategoryController::class, 'archive'])->name('schedule-categories.archive');
+
+    // Bulk Schedule Creation
+    Route::prefix('schedules/bulk')->name('schedules.bulk.')->group(function () {
+        Route::get('/create', [BulkScheduleController::class, 'create'])->name('create');
+        Route::post('/store', [BulkScheduleController::class, 'store'])->name('store');
+        Route::post('/validate', [BulkScheduleController::class, 'validate'])->name('validate');
+        Route::post('/{category}/publish', [BulkScheduleController::class, 'publish'])->name('publish');
+        Route::delete('/{category}/drafts', [BulkScheduleController::class, 'deleteDrafts'])->name('delete-drafts');
+    });
 
     // Departments Management (CRUD)
     Route::resource('departments', \App\Http\Controllers\Admin\DepartmentController::class);

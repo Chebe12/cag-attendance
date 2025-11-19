@@ -189,6 +189,89 @@
     </div>
 </div>
 
+<!-- Schedule Categories Section -->
+<div class="rounded-xl bg-white shadow-sm border border-gray-100 p-6 mb-8">
+    <div class="flex items-center justify-between mb-6">
+        <div>
+            <h2 class="text-lg font-semibold text-gray-900">Schedule Categories</h2>
+            <p class="text-sm text-gray-600 mt-1">Manage your schedule terms and categories</p>
+        </div>
+        <div class="flex gap-2">
+            <a href="{{ route('admin.schedule-categories.index') }}" class="text-sm font-medium text-green-600 hover:text-green-500">View all</a>
+            <span class="text-gray-300">|</span>
+            <a href="{{ route('admin.schedule-categories.create') }}" class="text-sm font-medium text-blue-600 hover:text-blue-500">Create new</a>
+        </div>
+    </div>
+
+    @php
+        $activeCategories = \App\Models\ScheduleCategory::whereIn('status', ['active', 'draft'])
+            ->with(['schedules'])
+            ->latest()
+            ->take(3)
+            ->get();
+    @endphp
+
+    @if($activeCategories->count() > 0)
+        <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+            @foreach($activeCategories as $category)
+                <div class="border rounded-lg p-4 hover:shadow-md transition-shadow">
+                    <div class="flex items-center justify-between mb-2">
+                        <h3 class="font-semibold text-gray-900 truncate">{{ $category->name }}</h3>
+                        @php
+                            $statusColors = [
+                                'draft' => 'bg-gray-100 text-gray-800',
+                                'active' => 'bg-green-100 text-green-800',
+                                'completed' => 'bg-blue-100 text-blue-800',
+                                'archived' => 'bg-yellow-100 text-yellow-800',
+                            ];
+                        @endphp
+                        <span class="inline-flex items-center px-2 py-0.5 rounded text-xs font-medium {{ $statusColors[$category->status] ?? 'bg-gray-100 text-gray-800' }}">
+                            {{ ucfirst($category->status) }}
+                        </span>
+                    </div>
+                    <p class="text-xs text-gray-600 mb-3">
+                        {{ $category->start_date->format('M d, Y') }} - {{ $category->end_date->format('M d, Y') }}
+                    </p>
+                    <div class="grid grid-cols-2 gap-2 text-sm mb-3">
+                        <div class="bg-gray-50 rounded p-2 text-center">
+                            <div class="text-xs text-gray-600">Schedules</div>
+                            <div class="font-bold text-gray-900">{{ $category->schedules->count() }}</div>
+                        </div>
+                        <div class="bg-green-50 rounded p-2 text-center">
+                            <div class="text-xs text-gray-600">Published</div>
+                            <div class="font-bold text-green-600">{{ $category->publishedSchedules()->count() }}</div>
+                        </div>
+                    </div>
+                    <div class="flex gap-2">
+                        <a href="{{ route('admin.schedule-categories.show', $category) }}"
+                           class="flex-1 text-center px-3 py-1.5 bg-blue-50 hover:bg-blue-100 text-blue-700 text-xs font-medium rounded transition-colors">
+                            View
+                        </a>
+                        <a href="{{ route('admin.schedules.bulk.create', ['category_id' => $category->id]) }}"
+                           class="flex-1 text-center px-3 py-1.5 bg-green-50 hover:bg-green-100 text-green-700 text-xs font-medium rounded transition-colors">
+                            Manage
+                        </a>
+                    </div>
+                </div>
+            @endforeach
+        </div>
+    @else
+        <div class="text-center py-8">
+            <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 5H7a2 2 0 00-2 2v12a2 2 0 002 2h10a2 2 0 002-2V7a2 2 0 00-2-2h-2M9 5a2 2 0 002 2h2a2 2 0 002-2M9 5a2 2 0 012-2h2a2 2 0 012 2"/>
+            </svg>
+            <h3 class="mt-2 text-sm font-medium text-gray-900">No categories yet</h3>
+            <p class="mt-1 text-sm text-gray-500">Get started by creating your first schedule category.</p>
+            <div class="mt-4">
+                <a href="{{ route('admin.schedule-categories.create') }}"
+                   class="inline-flex items-center px-4 py-2 bg-green-600 hover:bg-green-700 text-white text-sm font-semibold rounded-lg">
+                    Create Category
+                </a>
+            </div>
+        </div>
+    @endif
+</div>
+
 <!-- Recent Attendances Table -->
 <div class="rounded-xl bg-white shadow-sm border border-gray-100 p-6">
     <div class="flex items-center justify-between mb-6">

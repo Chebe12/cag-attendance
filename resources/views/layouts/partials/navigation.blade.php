@@ -44,6 +44,22 @@
         Schedules
     </a>
 
+    <a href="{{ route('admin.schedule-categories.index') }}"
+       class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all {{ str_starts_with($currentRoute, 'admin.schedule-categories') ? 'bg-green-700 text-white shadow-lg' : 'text-green-100 hover:bg-green-700/50 hover:text-white' }}">
+        <svg class="mr-3 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 012-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"/>
+        </svg>
+        Schedule Categories
+    </a>
+
+    <a href="{{ route('admin.schedules.availability') }}"
+       class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all {{ $currentRoute === 'admin.schedules.availability' ? 'bg-green-700 text-white shadow-lg' : 'text-green-100 hover:bg-green-700/50 hover:text-white' }}">
+        <svg class="mr-3 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12l2 2 4-4m6 2a9 9 0 11-18 0 9 9 0 0118 0z"/>
+        </svg>
+        Instructor Availability
+    </a>
+
     <a href="{{ route('admin.qr-codes.index') }}"
        class="flex items-center px-3 py-2.5 text-sm font-medium rounded-lg transition-all {{ str_starts_with($currentRoute, 'admin.qr-codes') ? 'bg-green-700 text-white shadow-lg' : 'text-green-100 hover:bg-green-700/50 hover:text-white' }}">
         <svg class="mr-3 h-5 w-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">

@@ -11,6 +11,7 @@ class Schedule extends Model
     use HasFactory, SoftDeletes;
 
     protected $fillable = [
+        'category_id',
         'user_id',
         'client_id',
         'shift_id',
@@ -21,6 +22,7 @@ class Schedule extends Model
         'session_time',
         'is_recurring',
         'status',
+        'draft_status',
         'notes',
         'created_by',
     ];
@@ -87,6 +89,11 @@ class Schedule extends Model
         return $times ? $times['end'] : null;
     }
 
+    public function category()
+    {
+        return $this->belongsTo(ScheduleCategory::class, 'category_id');
+    }
+
     public function user()
     {
         return $this->belongsTo(User::class);
@@ -121,5 +128,47 @@ class Schedule extends Model
     public function scopeToday($query)
     {
         return $query->whereDate('scheduled_date', now()->toDateString());
+    }
+
+    public function scopePublished($query)
+    {
+        return $query->where('draft_status', 'published');
+    }
+
+    public function scopeDraft($query)
+    {
+        return $query->where('draft_status', 'draft');
+    }
+
+    public function scopeByCategory($query, $categoryId)
+    {
+        return $query->where('category_id', $categoryId);
+    }
+
+    public function scopeByDay($query, $dayOfWeek)
+    {
+        return $query->where('day_of_week', $dayOfWeek);
+    }
+
+    public function scopeBySession($query, $session)
+    {
+        return $query->where('session_time', $session);
+    }
+
+    /**
+     * Check if this schedule conflicts with another
+     */
+    public static function hasConflict($userId, $dayOfWeek, $session, $categoryId, $excludeScheduleId = null)
+    {
+        $query = self::where('user_id', $userId)
+            ->where('day_of_week', $dayOfWeek)
+            ->where('session_time', $session)
+            ->where('category_id', $categoryId);
+
+        if ($excludeScheduleId) {
+            $query->where('id', '!=', $excludeScheduleId);
+        }
+
+        return $query->exists();
     }
 }

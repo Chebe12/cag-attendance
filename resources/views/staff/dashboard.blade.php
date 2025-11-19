@@ -141,6 +141,87 @@
     </div>
 </div>
 
+<!-- This Week's Schedule (Recurring) -->
+@php
+    $activeCategory = \App\Models\ScheduleCategory::where('status', 'active')
+        ->where('start_date', '<=', now())
+        ->where('end_date', '>=', now())
+        ->first();
+
+    $weeklySchedules = [];
+    if ($activeCategory) {
+        $weeklySchedules = \App\Models\Schedule::where('user_id', auth()->id())
+            ->where('category_id', $activeCategory->id)
+            ->where('draft_status', 'published')
+            ->with(['client', 'category'])
+            ->orderByRaw("FIELD(day_of_week, 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday')")
+            ->orderByRaw("FIELD(session_time, 'morning', 'mid-morning', 'afternoon')")
+            ->get()
+            ->groupBy('day_of_week');
+    }
+
+    $daysOfWeek = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'];
+    $today = strtolower(now()->format('l'));
+@endphp
+
+@if($activeCategory)
+<div class="rounded-xl bg-white shadow-sm border border-gray-100 p-6 mb-8">
+    <div class="flex items-center justify-between mb-4">
+        <div>
+            <h2 class="text-lg font-semibold text-gray-900">This Week's Schedule</h2>
+            <p class="text-xs text-gray-600 mt-1">{{ $activeCategory->name }} - Recurring Weekly</p>
+        </div>
+        <a href="{{ route('staff.schedules.index') }}" class="text-sm font-medium text-green-600 hover:text-green-500">View all</a>
+    </div>
+
+    <div class="grid grid-cols-1 md:grid-cols-7 gap-2">
+        @foreach($daysOfWeek as $day)
+            @php
+                $isToday = $day === $today;
+                $daySchedules = $weeklySchedules[$day] ?? collect();
+            @endphp
+            <div class="border rounded-lg p-3 {{ $isToday ? 'bg-green-50 border-green-300 ring-2 ring-green-200' : 'bg-gray-50' }}">
+                <h3 class="text-xs font-bold {{ $isToday ? 'text-green-800' : 'text-gray-700' }} uppercase mb-2">
+                    {{ substr($day, 0, 3) }}
+                    @if($isToday)
+                        <span class="ml-1 inline-flex items-center px-1.5 py-0.5 rounded text-xs font-medium bg-green-600 text-white">
+                            Today
+                        </span>
+                    @endif
+                </h3>
+                @if($daySchedules->count() > 0)
+                    <div class="space-y-1.5">
+                        @foreach($daySchedules as $schedule)
+                            @php
+                                $sessionColors = [
+                                    'morning' => 'bg-green-100 text-green-800 border-green-300',
+                                    'mid-morning' => 'bg-blue-100 text-blue-800 border-blue-300',
+                                    'afternoon' => 'bg-purple-100 text-purple-800 border-purple-300',
+                                ];
+                            @endphp
+                            <div class="text-xs p-2 rounded border {{ $sessionColors[$schedule->session_time] ?? 'bg-gray-100 text-gray-800 border-gray-300' }}">
+                                <div class="font-semibold">{{ $schedule->client->name }}</div>
+                                <div class="text-xs opacity-75 mt-0.5">
+                                    {{ ucfirst(str_replace('-', ' ', $schedule->session_time)) }}
+                                </div>
+                                @php
+                                    $times = \App\Models\Schedule::getSessionTimes($schedule->session_time);
+                                @endphp
+                                <div class="text-xs opacity-75">
+                                    {{ date('g:i A', strtotime($times['start'])) }}
+                                </div>
+                            </div>
+                        @endforeach
+                    </div>
+                @else
+                    <p class="text-xs text-gray-400 italic text-center py-2">No schedule</p>
+                @endif
+            </div>
+        @endforeach
+    </div>
+</div>
+@endif
+
 <!-- Upcoming Schedules and This Week's Attendance -->
 <div class="grid grid-cols-1 gap-6 lg:grid-cols-2 mb-8">
     <!-- Upcoming Schedules -->
@@ -155,14 +236,17 @@
                 <div class="flex items-center p-3 bg-gray-50 rounded-lg hover:bg-gray-100 transition-colors">
                     <div class="flex-shrink-0">
                         <div class="h-10 w-10 rounded-lg bg-gradient-to-br from-green-500 to-green-600 flex items-center justify-center text-white font-bold text-xs">
-                            {{ \Carbon\Carbon::parse($schedule->date)->format('d') }}
+                            {{ substr($schedule->display_day ?? ucfirst($schedule->day_of_week), 0, 3) }}
                         </div>
                     </div>
                     <div class="ml-4 flex-1 min-w-0">
                         <p class="text-sm font-medium text-gray-900 truncate">{{ $schedule->client->name }}</p>
                         <p class="text-xs text-gray-500">
-                            {{ \Carbon\Carbon::parse($schedule->date)->format('M j') }} •
-                            {{ \Carbon\Carbon::parse($schedule->start_time)->format('g:i A') }}
+                            {{ $schedule->display_day ?? ucfirst($schedule->day_of_week) }} •
+                            @php
+                                $times = \App\Models\Schedule::getSessionTimes($schedule->session_time);
+                            @endphp
+                            {{ date('g:i A', strtotime($times['start'])) }}
                         </p>
                     </div>
                 </div>
@@ -185,7 +269,7 @@
         </div>
 
         <div class="space-y-3">
-            @forelse($weekAttendance ?? [] as $attendance)
+            @forelse($weekAttendances ?? [] as $attendance)
                 <div class="flex items-center justify-between p-3 bg-gray-50 rounded-lg">
                     <div class="flex items-center space-x-3">
                         <div class="text-sm font-medium text-gray-900">

@@ -114,7 +114,12 @@ class ScheduleController extends Controller
         $users = User::active()->orderBy('firstname')->get();
         $clients = Client::active()->orderBy('name')->get();
 
-        return view('admin.schedules.create', compact('users', 'clients'));
+        // Get active and draft categories for weekly recurring schedules
+        $categories = \App\Models\ScheduleCategory::whereIn('status', ['draft', 'active'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('admin.schedules.create', compact('users', 'clients', 'categories'));
     }
 
     /**
@@ -133,6 +138,7 @@ class ScheduleController extends Controller
             'session_time' => 'required|in:morning,mid-morning,afternoon',
             'shift_id' => 'nullable|exists:shifts,id',
             'is_recurring' => 'boolean',
+            'category_id' => 'nullable|exists:schedule_categories,id|required_if:is_recurring,true',
             'scheduled_date' => 'nullable|date|after_or_equal:today|required_if:is_recurring,false',
             'day_of_week' => 'nullable|string|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday|required_if:is_recurring,true',
             'status' => 'required|string|in:draft,scheduled,pending,canceled',
@@ -145,6 +151,8 @@ class ScheduleController extends Controller
             'session_time.required' => 'Please select a session.',
             'session_time.in' => 'Invalid session selected.',
             'shift_id.exists' => 'The selected shift does not exist.',
+            'category_id.required_if' => 'Schedule category is required for recurring schedules.',
+            'category_id.exists' => 'The selected category does not exist.',
             'scheduled_date.required_if' => 'Scheduled date is required for non-recurring schedules.',
             'scheduled_date.after_or_equal' => 'Scheduled date must be today or in the future.',
             'day_of_week.required_if' => 'Day of week is required for recurring schedules.',
@@ -160,6 +168,9 @@ class ScheduleController extends Controller
         // Set created_by to authenticated admin
         $validated['created_by'] = auth()->id();
         $validated['is_recurring'] = $request->input('is_recurring', 0) == 1;
+
+        // Set draft_status to published for single schedule creation
+        $validated['draft_status'] = 'published';
 
         // Get session times based on session_time
         $sessionTimes = Schedule::getSessionTimes($validated['session_time']);
@@ -180,6 +191,42 @@ class ScheduleController extends Controller
                     ->back()
                     ->withInput()
                     ->with('warning', 'Warning: This user already has a schedule at this time: ' . $conflict->client->name);
+            }
+        }
+
+        // Check for conflicts in weekly recurring schedules
+        if ($validated['is_recurring'] && !empty($validated['category_id'])) {
+            // Check for duplicate schedule (same instructor, client, day, session, category)
+            $duplicate = Schedule::where('category_id', $validated['category_id'])
+                ->where('user_id', $validated['user_id'])
+                ->where('client_id', $validated['client_id'])
+                ->where('day_of_week', $validated['day_of_week'])
+                ->where('session_time', $validated['session_time'])
+                ->first();
+
+            if ($duplicate) {
+                return redirect()
+                    ->back()
+                    ->withInput()
+                    ->with('error', 'This schedule already exists. The same instructor is already assigned to this client on ' . ucfirst($validated['day_of_week']) . ' ' . $validated['session_time'] . ' session.');
+            }
+
+            // Check for instructor conflict (same instructor, different client, same day/session/category)
+            $instructorConflict = Schedule::where('category_id', $validated['category_id'])
+                ->where('user_id', $validated['user_id'])
+                ->where('client_id', '!=', $validated['client_id'])
+                ->where('day_of_week', $validated['day_of_week'])
+                ->where('session_time', $validated['session_time'])
+                ->where('draft_status', 'published')
+                ->with('client')
+                ->first();
+
+            if ($instructorConflict) {
+                $instructor = User::find($validated['user_id']);
+                return redirect()
+                    ->back()
+                    ->withInput()
+                    ->with('error', 'Conflict: ' . $instructor->name . ' is already assigned to ' . $instructorConflict->client->name . ' on ' . ucfirst($validated['day_of_week']) . ' ' . $validated['session_time'] . ' session in this category.');
             }
         }
 
@@ -217,7 +264,12 @@ class ScheduleController extends Controller
         $users = User::active()->orderBy('firstname')->get();
         $clients = Client::active()->orderBy('name')->get();
 
-        return view('admin.schedules.edit', compact('schedule', 'users', 'clients'));
+        // Get active and draft categories for weekly recurring schedules
+        $categories = \App\Models\ScheduleCategory::whereIn('status', ['draft', 'active'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        return view('admin.schedules.edit', compact('schedule', 'users', 'clients', 'categories'));
     }
 
     /**
@@ -237,6 +289,7 @@ class ScheduleController extends Controller
             'session_time' => 'required|in:morning,mid-morning,afternoon',
             'shift_id' => 'nullable|exists:shifts,id',
             'is_recurring' => 'boolean',
+            'category_id' => 'nullable|exists:schedule_categories,id|required_if:is_recurring,true',
             'scheduled_date' => 'nullable|date|required_if:is_recurring,false',
             'day_of_week' => 'nullable|string|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday|required_if:is_recurring,true',
             'status' => 'required|string|in:draft,scheduled,pending,canceled',
@@ -249,6 +302,8 @@ class ScheduleController extends Controller
             'session_time.required' => 'Please select a session.',
             'session_time.in' => 'Invalid session selected.',
             'shift_id.exists' => 'The selected shift does not exist.',
+            'category_id.required_if' => 'Schedule category is required for recurring schedules.',
+            'category_id.exists' => 'The selected category does not exist.',
             'scheduled_date.required_if' => 'Scheduled date is required for non-recurring schedules.',
             'day_of_week.required_if' => 'Day of week is required for recurring schedules.',
             'day_of_week.in' => 'Invalid day of week selected.',
@@ -628,18 +683,27 @@ class ScheduleController extends Controller
         $weekStart = now()->startOfWeek()->addWeeks($weekOffset);
         $weekEnd = now()->startOfWeek()->addWeeks($weekOffset)->endOfWeek();
 
-        // Build query
-        $query = Schedule::with(['user', 'client'])
+        // Build query for RECURRING schedules (day-based, not date-based)
+        $recurringQuery = Schedule::with(['user', 'client', 'category'])
+            ->where('is_recurring', true)
+            ->where('draft_status', 'published')
+            ->where('status', '!=', 'cancelled');
+
+        // Also get one-time schedules for the specific week
+        $oneTimeQuery = Schedule::with(['user', 'client', 'category'])
+            ->where('is_recurring', false)
             ->whereBetween('scheduled_date', [$weekStart, $weekEnd])
             ->where('status', '!=', 'cancelled');
 
         // Filter by user if specified
         if ($userId) {
-            $query->where('user_id', $userId);
+            $recurringQuery->where('user_id', $userId);
+            $oneTimeQuery->where('user_id', $userId);
         }
 
-        // Get all schedules for the week
-        $schedules = $query->get();
+        // Get all schedules
+        $recurringSchedules = $recurringQuery->get();
+        $oneTimeSchedules = $oneTimeQuery->get();
 
         // Get all instructors
         $users = User::active()->orderBy('firstname')->get();
@@ -669,16 +733,121 @@ class ScheduleController extends Controller
             ];
 
             foreach ($sessions as $session) {
-                $daySchedules = $schedules->filter(function($schedule) use ($date, $session) {
+                // Get recurring schedules for this day and session
+                $daySchedules = $recurringSchedules->filter(function($schedule) use ($day, $session) {
+                    return $schedule->day_of_week === $day &&
+                           $schedule->session_time === $session;
+                });
+
+                // Add one-time schedules for this specific date and session
+                $oneTimeDaySchedules = $oneTimeSchedules->filter(function($schedule) use ($date, $session) {
                     return $schedule->scheduled_date &&
                            $schedule->scheduled_date->isSameDay($date) &&
                            $schedule->session_time === $session;
                 });
 
-                $weekSchedule[$day]['sessions'][$session] = $daySchedules;
+                // Merge both recurring and one-time schedules
+                $weekSchedule[$day]['sessions'][$session] = $daySchedules->merge($oneTimeDaySchedules);
             }
         }
 
         return view('admin.schedules.weekly', compact('weekSchedule', 'users', 'weekStart', 'weekEnd', 'weekOffset', 'userId'));
+    }
+
+    /**
+     * Display instructor availability/capacity overview
+     *
+     * @param  \Illuminate\Http\Request  $request
+     * @return \Illuminate\View\View
+     */
+    public function availability(Request $request)
+    {
+        // Get filter parameters
+        $categoryId = $request->input('category_id');
+        $departmentId = $request->input('department_id');
+
+        // Get all active instructors
+        $instructorsQuery = User::where('status', 'active')
+            ->whereIn('user_type', ['instructor', 'office_staff'])
+            ->orderBy('firstname');
+
+        if ($departmentId) {
+            $instructorsQuery->where('department_id', $departmentId);
+        }
+
+        $instructors = $instructorsQuery->get();
+
+        // Get all active categories
+        $categories = \App\Models\ScheduleCategory::whereIn('status', ['draft', 'active'])
+            ->orderBy('created_at', 'desc')
+            ->get();
+
+        // Get all departments
+        $departments = \App\Models\Department::orderBy('name')->get();
+
+        // Define structure
+        $weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
+        $sessions = ['morning', 'mid-morning', 'afternoon'];
+        $totalSlots = count($weekDays) * count($sessions); // 15 total slots
+
+        // Get schedules based on filter
+        $schedulesQuery = Schedule::where('is_recurring', true)
+            ->where('draft_status', 'published')
+            ->where('status', '!=', 'cancelled')
+            ->with(['client']);
+
+        if ($categoryId) {
+            $schedulesQuery->where('category_id', $categoryId);
+        }
+
+        $schedules = $schedulesQuery->get();
+
+        // Build availability data for each instructor
+        $instructorAvailability = [];
+        foreach ($instructors as $instructor) {
+            $instructorSchedules = $schedules->where('user_id', $instructor->id);
+
+            // Count occupied slots
+            $occupiedSlots = $instructorSchedules->count();
+            $availableSlots = $totalSlots - $occupiedSlots;
+            $percentageFull = $totalSlots > 0 ? round(($occupiedSlots / $totalSlots) * 100) : 0;
+
+            // Build slot details
+            $slotDetails = [];
+            foreach ($weekDays as $day) {
+                $slotDetails[$day] = [];
+                foreach ($sessions as $session) {
+                    $schedule = $instructorSchedules->first(function($s) use ($day, $session) {
+                        return $s->day_of_week === $day && $s->session_time === $session;
+                    });
+
+                    $slotDetails[$day][$session] = [
+                        'occupied' => $schedule !== null,
+                        'client' => $schedule ? $schedule->client->name : null,
+                        'schedule_id' => $schedule ? $schedule->id : null,
+                    ];
+                }
+            }
+
+            $instructorAvailability[] = [
+                'instructor' => $instructor,
+                'occupied_slots' => $occupiedSlots,
+                'available_slots' => $availableSlots,
+                'total_slots' => $totalSlots,
+                'percentage_full' => $percentageFull,
+                'is_full' => $availableSlots == 0,
+                'slot_details' => $slotDetails,
+            ];
+        }
+
+        return view('admin.schedules.availability', compact(
+            'instructorAvailability',
+            'categories',
+            'departments',
+            'categoryId',
+            'departmentId',
+            'weekDays',
+            'sessions'
+        ));
     }
 }
