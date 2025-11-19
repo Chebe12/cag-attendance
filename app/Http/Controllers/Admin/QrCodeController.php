@@ -110,7 +110,13 @@ class QrCodeController extends Controller
             $query->latest()->take(10);
         }]);
 
-        return view('admin.qr-codes.show', compact('qrCode'));
+        // Generate QR code SVG inline for display (works regardless of storage)
+        $qrCodeSvg = QrCodeGenerator::format('svg')
+            ->size(400)
+            ->errorCorrection('H')
+            ->generate($qrCode->code);
+
+        return view('admin.qr-codes.show', compact('qrCode', 'qrCodeSvg'));
     }
 
     /**

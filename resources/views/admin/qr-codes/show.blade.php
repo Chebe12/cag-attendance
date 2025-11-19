@@ -11,17 +11,9 @@
 
     <div class="bg-white rounded-lg shadow-sm border p-6">
         <div class="text-center mb-6">
-            @if($qrCode->qr_image_path && file_exists(storage_path('app/public/' . $qrCode->qr_image_path)))
-                <img src="{{ asset('storage/' . $qrCode->qr_image_path) }}" alt="QR Code" class="mx-auto" style="max-width: 400px;">
-            @else
-                <p class="text-gray-500">QR Code image not generated yet</p>
-                <form action="{{ route('admin.qr-codes.generate', $qrCode) }}" method="POST" class="mt-4">
-                    @csrf
-                    <button type="submit" class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                        Generate QR Code
-                    </button>
-                </form>
-            @endif
+            <div class="inline-block mx-auto" style="max-width: 400px;">
+                {!! $qrCodeSvg !!}
+            </div>
         </div>
 
         <div class="space-y-4">
@@ -49,20 +41,18 @@
         </div>
 
         <div class="mt-6 flex items-center space-x-3">
-            <a href="{{ route('admin.qr-codes.edit', $qrCode) }}" 
+            <a href="{{ route('admin.qr-codes.edit', $qrCode) }}"
                class="px-4 py-2 bg-gray-100 text-gray-700 rounded-lg hover:bg-gray-200">
                 Edit
             </a>
-            @if($qrCode->qr_image_path)
-                <a href="{{ route('admin.qr-codes.download', $qrCode) }}"
-                   class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
-                    Download
-                </a>
-                <a href="{{ route('admin.qr-codes.print', $qrCode) }}" target="_blank"
-                   class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
-                    Print
-                </a>
-            @endif
+            <a href="{{ route('admin.qr-codes.download', $qrCode) }}"
+               class="px-4 py-2 bg-green-600 text-white rounded-lg hover:bg-green-700">
+                Download
+            </a>
+            <a href="{{ route('admin.qr-codes.print', $qrCode) }}" target="_blank"
+               class="px-4 py-2 bg-blue-600 text-white rounded-lg hover:bg-blue-700">
+                Print
+            </a>
             <form action="{{ route('admin.qr-codes.destroy', $qrCode) }}" method="POST" onsubmit="return confirm('Are you sure?');">
                 @csrf
                 @method('DELETE')
