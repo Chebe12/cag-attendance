@@ -141,6 +141,7 @@ Route::middleware(['auth', 'check.user.type:admin'])->prefix('admin')->name('adm
         Route::get('/', [ReportController::class, 'index'])->name('index');
         Route::get('/attendance', [ReportController::class, 'attendance'])->name('attendance');
         Route::get('/schedules', [ReportController::class, 'schedules'])->name('schedules');
+        Route::get('/statistics', [ReportController::class, 'statistics'])->name('statistics');
         Route::post('/export', [ReportController::class, 'export'])->name('export');
     });
 });

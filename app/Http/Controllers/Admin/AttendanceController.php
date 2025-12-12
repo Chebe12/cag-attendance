@@ -23,7 +23,7 @@ class AttendanceController extends Controller
     public function index(Request $request)
     {
         $query = Attendance::with(['user', 'qrCode'])
-            ->latest('check_in_time');
+            ->latest('check_in');
 
         // Filter by user if specified
         if ($request->has('user_id') && $request->user_id) {
@@ -32,16 +32,16 @@ class AttendanceController extends Controller
 
         // Filter by date if specified
         if ($request->has('date') && $request->date) {
-            $query->whereDate('check_in_time', $request->date);
+            $query->whereDate('attendance_date', $request->date);
         }
 
         // Filter by date range if specified
         if ($request->has('start_date') && $request->start_date) {
-            $query->whereDate('check_in_time', '>=', $request->start_date);
+            $query->whereDate('attendance_date', '>=', $request->start_date);
         }
 
         if ($request->has('end_date') && $request->end_date) {
-            $query->whereDate('check_in_time', '<=', $request->end_date);
+            $query->whereDate('attendance_date', '<=', $request->end_date);
         }
 
         $attendances = $query->paginate(20);
