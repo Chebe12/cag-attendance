@@ -114,6 +114,11 @@ class Schedule extends Model
         return $this->belongsTo(User::class, 'created_by');
     }
 
+    public function attendances()
+    {
+        return $this->hasMany(Attendance::class);
+    }
+
     public function attendance()
     {
         return $this->hasOne(Attendance::class);

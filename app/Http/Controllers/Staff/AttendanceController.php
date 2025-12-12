@@ -660,21 +660,37 @@ class AttendanceController extends Controller
             ->latest('check_in')
             ->get();
 
-        // For now, return a simple response
-        // TODO: Implement proper PDF/Excel export using libraries like dompdf or maatwebsite/excel
-        if ($format === 'pdf') {
-            return response()->json([
-                'message' => 'PDF export functionality will be implemented soon.',
-                'count' => $attendances->count(),
-            ]);
-        } elseif ($format === 'excel') {
-            return response()->json([
-                'message' => 'Excel export functionality will be implemented soon.',
-                'count' => $attendances->count(),
-            ]);
-        }
+        try {
+            // Generate filename
+            $filename = 'my_attendance_' . now()->format('Y-m-d_His');
 
-        return back()->with('error', 'Invalid export format.');
+            // Export based on format
+            if ($format === 'pdf') {
+                $pdf = \Barryvdh\DomPDF\Facade\Pdf::loadView('staff.attendance.pdf', [
+                    'data' => $attendances,
+                    'user' => $user,
+                    'generated_at' => now()->format('Y-m-d H:i:s'),
+                ]);
+
+                return $pdf->download($filename . '.pdf');
+            } elseif ($format === 'excel') {
+                return \Maatwebsite\Excel\Facades\Excel::download(
+                    new \App\Exports\AttendanceExport($attendances),
+                    $filename . '.xlsx'
+                );
+            }
+
+            return back()->with('error', 'Invalid export format.');
+
+        } catch (\Exception $e) {
+            \Illuminate\Support\Facades\Log::error('Staff Attendance Export Error: ' . $e->getMessage(), [
+                'user_id' => $user->id,
+                'format' => $format,
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return back()->with('error', 'An error occurred while exporting. Please try again.');
+        }
     }
 
     /**
@@ -826,6 +842,11 @@ class AttendanceController extends Controller
      */
     private function saveBase64Photo($base64Photo, $type = 'check_in')
     {
+        // Validate input
+        if (empty($base64Photo)) {
+            throw new \Exception('Photo data is empty');
+        }
+
         // Remove data:image/png;base64, prefix if present
         $image = str_replace('data:image/png;base64,', '', $base64Photo);
         $image = str_replace('data:image/jpeg;base64,', '', $image);
@@ -833,13 +854,33 @@ class AttendanceController extends Controller
         $image = str_replace(' ', '+', $image);
 
         // Decode base64
-        $imageData = base64_decode($image);
+        $imageData = base64_decode($image, true);
+
+        // Validate decoded data
+        if ($imageData === false || empty($imageData)) {
+            throw new \Exception('Failed to decode base64 image data');
+        }
+
+        // Validate image data is actual image
+        if (@imagecreatefromstring($imageData) === false) {
+            throw new \Exception('Invalid image data');
+        }
+
+        // Ensure directory exists
+        $directory = 'attendance/' . $type;
+        if (!\Storage::disk('public')->exists($directory)) {
+            \Storage::disk('public')->makeDirectory($directory, 0755, true);
+        }
 
         // Generate unique filename
-        $filename = 'attendance/' . $type . '/' . uniqid() . '_' . time() . '.jpg';
+        $filename = $directory . '/' . uniqid() . '_' . time() . '.jpg';
 
         // Save to storage
-        \Storage::disk('public')->put($filename, $imageData);
+        $saved = \Storage::disk('public')->put($filename, $imageData);
+
+        if (!$saved) {
+            throw new \Exception('Failed to save photo to storage');
+        }
 
         return $filename;
     }
