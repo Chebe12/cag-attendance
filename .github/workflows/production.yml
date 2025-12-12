@@ -49,7 +49,7 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           ssh_private_key: ${{ secrets.SSH_KEY }}
           local_path: "./deploy.tar.gz"
-          remote_path: "/home/CAGLOBALS/web/castore.com.ng/public_html/"
+          remote_path: "/home/CAGLOBALS/web/testing.caglobals.com/public_html/"
           sftp_only: true
           create_remote_dir: true
 
@@ -61,14 +61,14 @@ jobs:
           port: ${{ secrets.SSH_PORT }}
           key: ${{ secrets.SSH_KEY }}
           script: |
-            cd /home/CAGLOBALS/web/castore.com.ng/public_html
+            cd /home/CAGLOBALS/web/testing.caglobals.com/public_html
 
             # Extract files
             tar -xzf deploy.tar.gz
             rm deploy.tar.gz
 
             # Restore environment file
-            cp /home/CAGLOBALS/web/castore.com.ng/shared/.env .env
+            cp /home/CAGLOBALS/web/testing.caglobals.com/shared/.env .env
 
             # Ensure storage link exists
             php artisan storage:link || true
