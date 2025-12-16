@@ -199,10 +199,13 @@ class AttendanceController extends Controller
             // Get IP address and location
             $ipAddress = $request->ip();
             $location = null;
-            if (isset($validated['latitude']) && isset($validated['longitude'])) {
+            $latitude = $validated['latitude'] ?? null;
+            $longitude = $validated['longitude'] ?? null;
+
+            if ($latitude && $longitude) {
                 $location = json_encode([
-                    'latitude' => $validated['latitude'],
-                    'longitude' => $validated['longitude'],
+                    'latitude' => $latitude,
+                    'longitude' => $longitude,
                     'timestamp' => now()->toDateTimeString(),
                 ]);
             }
@@ -233,12 +236,12 @@ class AttendanceController extends Controller
 
                     if (!$attendance) {
                         // Check in to client location
-                        $attendance = $this->processCheckIn($user, $qrCode, $ipAddress, $location, $validated['photo'] ?? null, null, $schedule);
+                        $attendance = $this->processCheckIn($user, $qrCode, $ipAddress, $location, $validated['photo'] ?? null, null, $schedule, 'client_visit', $latitude, $longitude);
                         $action = 'check_in';
                         $message = 'Checked in at ' . $schedule->client->name;
                     } elseif (!$attendance->check_out) {
                         // Check out from client location
-                        $this->processCheckOut($attendance, $ipAddress, $location, $validated['photo'] ?? null);
+                        $this->processCheckOut($attendance, $ipAddress, $location, $validated['photo'] ?? null, null, $latitude, $longitude);
                         $action = 'check_out';
                         $message = 'Checked out from ' . $schedule->client->name;
                     } else {
@@ -255,12 +258,12 @@ class AttendanceController extends Controller
 
                     if (!$attendance) {
                         // Check in to office
-                        $attendance = $this->processCheckIn($user, $qrCode, $ipAddress, $location, $validated['photo'] ?? null, null, null, 'office');
+                        $attendance = $this->processCheckIn($user, $qrCode, $ipAddress, $location, $validated['photo'] ?? null, null, null, 'office', $latitude, $longitude);
                         $action = 'check_in';
                         $message = 'Checked in at office';
                     } elseif (!$attendance->check_out) {
                         // Check out from office
-                        $this->processCheckOut($attendance, $ipAddress, $location, $validated['photo'] ?? null);
+                        $this->processCheckOut($attendance, $ipAddress, $location, $validated['photo'] ?? null, null, $latitude, $longitude);
                         $action = 'check_out';
                         $message = 'Checked out from office';
                     } else {
@@ -707,9 +710,11 @@ class AttendanceController extends Controller
      * @param string|null $notes
      * @param \App\Models\Schedule|null $schedule
      * @param string $attendanceType
+     * @param float|null $latitude
+     * @param float|null $longitude
      * @return \App\Models\Attendance
      */
-    private function processCheckIn($user, $qrCode, $ipAddress, $location, $photo = null, $notes = null, $schedule = null, $attendanceType = 'client_visit')
+    private function processCheckIn($user, $qrCode, $ipAddress, $location, $photo = null, $notes = null, $schedule = null, $attendanceType = 'client_visit', $latitude = null, $longitude = null)
     {
         $now = now();
         $today = $now->toDateString();
@@ -753,6 +758,8 @@ class AttendanceController extends Controller
             'check_in' => $now,
             'check_in_location' => $location,
             'check_in_ip' => $ipAddress,
+            'check_in_latitude' => $latitude,
+            'check_in_longitude' => $longitude,
             'status' => $status,
             'check_in_photo' => $photoPath,
             'notes' => $notes,
@@ -772,9 +779,11 @@ class AttendanceController extends Controller
      * @param string|null $location
      * @param string|null $photo
      * @param string|null $notes
+     * @param float|null $latitude
+     * @param float|null $longitude
      * @return void
      */
-    private function processCheckOut($attendance, $ipAddress, $location, $photo = null, $notes = null)
+    private function processCheckOut($attendance, $ipAddress, $location, $photo = null, $notes = null, $latitude = null, $longitude = null)
     {
         $now = now();
 
@@ -793,6 +802,8 @@ class AttendanceController extends Controller
             'check_out' => $now,
             'check_out_location' => $location,
             'check_out_ip' => $ipAddress,
+            'check_out_latitude' => $latitude,
+            'check_out_longitude' => $longitude,
             'check_out_photo' => $photoPath,
             'notes' => $attendance->notes ? $attendance->notes . "\n" . $notes : $notes,
         ]);
