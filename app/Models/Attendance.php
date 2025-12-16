@@ -85,6 +85,17 @@ class Attendance extends Model
                      ->whereMonth('attendance_date', now()->month);
     }
 
+    /**
+     * Get the work duration in hours
+     */
+    public function getHoursAttribute()
+    {
+        if ($this->work_duration) {
+            return round($this->work_duration / 60, 2);
+        }
+        return 0.0;
+    }
+
     public function calculateDuration()
     {
         if ($this->check_in && $this->check_out) {

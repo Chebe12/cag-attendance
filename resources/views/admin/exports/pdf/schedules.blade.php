@@ -2,7 +2,7 @@
 <html>
 <head>
     <meta charset="utf-8">
-    <title>Attendance Report</title>
+    <title>Schedules Report</title>
     <style>
         body {
             font-family: Arial, sans-serif;
@@ -23,9 +23,6 @@
         .header p {
             margin: 5px 0;
             color: #666;
-        }
-        .info {
-            margin-bottom: 20px;
         }
         table {
             width: 100%;
@@ -48,21 +45,21 @@
         tr:nth-child(even) {
             background-color: #f9f9f9;
         }
-        .status {
+        .status-badge {
             padding: 3px 8px;
             border-radius: 3px;
             font-size: 9px;
             font-weight: bold;
         }
-        .status-present {
+        .status-scheduled {
+            background-color: #dbeafe;
+            color: #1e40af;
+        }
+        .status-completed {
             background-color: #d1fae5;
             color: #065f46;
         }
-        .status-late {
-            background-color: #fef3c7;
-            color: #92400e;
-        }
-        .status-absent {
+        .status-cancelled {
             background-color: #fee2e2;
             color: #991b1b;
         }
@@ -80,71 +77,67 @@
             border-radius: 5px;
             margin-bottom: 20px;
         }
-        .summary-row {
-            display: flex;
-            justify-content: space-between;
-            margin: 5px 0;
-        }
     </style>
 </head>
 <body>
     <div class="header">
-        <h1>CA Global Attendance Report</h1>
-        <p>Attendance Management System</p>
+        <h1>CA Global Schedules Report</h1>
+        <p>Schedule Management System</p>
         <p><strong>Generated:</strong> {{ $generated_at }}</p>
     </div>
 
     <div class="summary">
         <h3 style="margin-top: 0; color: #22c55e;">Report Summary</h3>
-        <p><strong>Total Records:</strong> {{ $data->count() }}</p>
-        <p><strong>Present:</strong> {{ $data->where('status', 'present')->count() }} |
-           <strong>Late:</strong> {{ $data->where('status', 'late')->count() }} |
-           <strong>Absent:</strong> {{ $data->where('status', 'absent')->count() }}</p>
-        <p><strong>Total Work Hours:</strong> {{ round($data->sum('work_duration') / 60, 2) }} hours</p>
+        <p><strong>Total Schedules:</strong> {{ $data->count() }}</p>
+        <p><strong>Scheduled:</strong> {{ $data->where('status', 'scheduled')->count() }} |
+           <strong>Completed:</strong> {{ $data->where('status', 'completed')->count() }} |
+           <strong>Cancelled:</strong> {{ $data->where('status', 'cancelled')->count() }}</p>
+        <p><strong>Published:</strong> {{ $data->where('draft_status', 'published')->count() }} |
+           <strong>Drafts:</strong> {{ $data->where('draft_status', 'draft')->count() }}</p>
     </div>
 
     <table>
         <thead>
             <tr>
-                <th>Employee</th>
-                <th>Department</th>
-                <th>Date</th>
-                <th>Check In</th>
-                <th>Check Out</th>
-                <th>Status</th>
-                <th>Hours</th>
+                <th>Instructor</th>
                 <th>Client</th>
+                <th>Day</th>
+                <th>Session</th>
+                <th>Time</th>
+                <th>Shift</th>
+                <th>Status</th>
             </tr>
         </thead>
         <tbody>
-            @foreach($data as $attendance)
+            @foreach($data as $schedule)
             <tr>
                 <td>
-                    <strong>{{ $attendance->user->name ?? '-' }}</strong><br>
-                    <small>{{ $attendance->user->employee_no ?? '-' }}</small>
+                    <strong>{{ $schedule->user->name ?? '-' }}</strong><br>
+                    <small>{{ $schedule->user->employee_no ?? '-' }}</small>
                 </td>
-                <td>{{ $attendance->user->department ?? '-' }}</td>
-                <td>{{ \Carbon\Carbon::parse($attendance->attendance_date)->format('M d, Y') }}</td>
-                <td>{{ $attendance->check_in ? \Carbon\Carbon::parse($attendance->check_in)->format('h:i A') : '-' }}</td>
-                <td>{{ $attendance->check_out ? \Carbon\Carbon::parse($attendance->check_out)->format('h:i A') : '-' }}</td>
+                <td>{{ $schedule->client->name ?? '-' }}</td>
+                <td>{{ ucfirst($schedule->day_of_week ?? '-') }}</td>
+                <td>{{ ucfirst(str_replace('_', ' ', $schedule->session_time ?? '-')) }}</td>
                 <td>
-                    @if($attendance->status == 'present')
-                        <span class="status status-present">PRESENT</span>
-                    @elseif($attendance->status == 'late')
-                        <span class="status status-late">LATE</span>
-                    @else
-                        <span class="status status-absent">ABSENT</span>
+                    {{ $schedule->start_time ? \Carbon\Carbon::parse($schedule->start_time)->format('h:i A') : '-' }} -
+                    {{ $schedule->end_time ? \Carbon\Carbon::parse($schedule->end_time)->format('h:i A') : '-' }}
+                </td>
+                <td>{{ $schedule->shift->name ?? '-' }}</td>
+                <td>
+                    <span class="status-badge status-{{ $schedule->status }}">
+                        {{ strtoupper($schedule->status ?? 'N/A') }}
+                    </span>
+                    @if($schedule->draft_status === 'draft')
+                    <br><small style="color: #f59e0b;">DRAFT</small>
                     @endif
                 </td>
-                <td>{{ $attendance->work_duration ? round($attendance->work_duration / 60, 2) : '0.00' }} hrs</td>
-                <td>{{ $attendance->client->name ?? '-' }}</td>
             </tr>
             @endforeach
         </tbody>
     </table>
 
     <div class="footer">
-        <p>CA Global - Attendance Management System</p>
+        <p>CA Global - Schedule Management System</p>
         <p>This is a computer-generated report. No signature required.</p>
     </div>
 </body>

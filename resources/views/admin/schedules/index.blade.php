@@ -45,6 +45,15 @@
     clearFilters() {
         this.filters = { search: '', session: '', user: '', date: '' };
         window.location.href = '{{ route('admin.schedules.index') }}?view=' + this.view;
+    },
+    exportReport(format) {
+        const params = new URLSearchParams();
+        if (this.filters.search) params.append('search', this.filters.search);
+        if (this.filters.session) params.append('session_time', this.filters.session);
+        if (this.filters.user) params.append('user_id', this.filters.user);
+        if (this.filters.date) params.append('date', this.filters.date);
+        params.append('format', format);
+        window.location.href = '{{ route('admin.schedules.export') }}?' + params.toString();
     }
 }">
     <!-- Page header -->
@@ -71,6 +80,56 @@
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>
                         </svg>
                     </button>
+                </div>
+
+                <!-- Export Button -->
+                <div x-data="{ showExportMenu: false }" class="relative">
+                    <button @click="showExportMenu = !showExportMenu"
+                            class="inline-flex items-center px-4 py-2 bg-blue-600 hover:bg-blue-700 text-white font-medium rounded-lg transition">
+                        <svg class="w-5 h-5 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3m2 8H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                        </svg>
+                        Export
+                        <svg class="w-4 h-4 ml-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7"/>
+                        </svg>
+                    </button>
+
+                    <!-- Dropdown Menu -->
+                    <div x-show="showExportMenu"
+                         @click.away="showExportMenu = false"
+                         x-transition:enter="transition ease-out duration-100"
+                         x-transition:enter-start="transform opacity-0 scale-95"
+                         x-transition:enter-end="transform opacity-100 scale-100"
+                         x-transition:leave="transition ease-in duration-75"
+                         x-transition:leave-start="transform opacity-100 scale-100"
+                         x-transition:leave-end="transform opacity-0 scale-95"
+                         class="absolute right-0 mt-2 w-48 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5 z-50"
+                         style="display: none;">
+                        <div class="py-1">
+                            <button @click="exportReport('pdf'); showExportMenu = false"
+                                    class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                                <svg class="w-4 h-4 mr-3 text-red-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M7 21h10a2 2 0 002-2V9.414a1 1 0 00-.293-.707l-5.414-5.414A1 1 0 0012.586 3H7a2 2 0 00-2 2v14a2 2 0 002 2z"/>
+                                </svg>
+                                Export as PDF
+                            </button>
+                            <button @click="exportReport('excel'); showExportMenu = false"
+                                    class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                                <svg class="w-4 h-4 mr-3 text-green-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M9 12h6m-6 4h6m2 5H7a2 2 0 01-2-2V5a2 2 0 012-2h5.586a1 1 0 01.707.293l5.414 5.414a1 1 0 01.293.707V19a2 2 0 01-2 2z"/>
+                                </svg>
+                                Export as Excel
+                            </button>
+                            <button @click="exportReport('csv'); showExportMenu = false"
+                                    class="w-full text-left px-4 py-2 text-sm text-gray-700 hover:bg-gray-100 flex items-center">
+                                <svg class="w-4 h-4 mr-3 text-orange-500" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 10v6m0 0l-3-3m3 3l3-3M3 17V7a2 2 0 012-2h6l2 2h6a2 2 0 012 2v8a2 2 0 01-2 2H5a2 2 0 01-2-2z"/>
+                                </svg>
+                                Export as CSV
+                            </button>
+                        </div>
+                    </div>
                 </div>
 
                 <a href="{{ route('admin.schedules.weekly') }}"
@@ -120,7 +179,6 @@
                             class="block w-full px-3 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500">
                         <option value="">All Sessions</option>
                         <option value="morning">Morning</option>
-                        <option value="mid-morning">Mid-Morning</option>
                         <option value="afternoon">Afternoon</option>
                     </select>
                 </div>
@@ -199,7 +257,7 @@
                             <td class="px-6 py-4 whitespace-nowrap">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                     {{ $schedule->session_time == 'morning' ? 'bg-blue-100 text-blue-800' : '' }}
-                                    {{ $schedule->session_time == 'mid-morning' ? 'bg-purple-100 text-purple-800' : '' }}
+                                    
                                     {{ $schedule->session_time == 'afternoon' ? 'bg-orange-100 text-orange-800' : '' }}">
                                     {{ ucfirst(str_replace('-', ' ', $schedule->session_time ?? 'N/A')) }}
                                 </span>

@@ -281,11 +281,11 @@
                     @forelse($attendances as $attendance)
                     <tr class="hover:bg-gray-50 transition">
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ $attendance->date->format('M d, Y') }}
+                            {{ $attendance->attendance_date ? $attendance->attendance_date->format('M d, Y') : 'N/A' }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap">
                             <div class="text-sm font-medium text-gray-900">{{ $attendance->user->name ?? 'N/A' }}</div>
-                            <div class="text-xs text-gray-500">{{ $attendance->user->employee_id ?? 'N/A' }}</div>
+                            <div class="text-xs text-gray-500">{{ $attendance->user->employee_no ?? 'N/A' }}</div>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-500">
                             {{ $attendance->client->name ?? 'N/A' }}
@@ -296,10 +296,10 @@
                             </span>
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ $attendance->clock_in->format('h:i A') }}
+                            {{ $attendance->check_in ? $attendance->check_in->format('h:i A') : '-' }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm text-gray-900">
-                            {{ $attendance->clock_out ? $attendance->clock_out->format('h:i A') : '-' }}
+                            {{ $attendance->check_out ? $attendance->check_out->format('h:i A') : '-' }}
                         </td>
                         <td class="px-6 py-4 whitespace-nowrap text-sm font-medium text-gray-900">
                             {{ $attendance->hours ?? '0.0' }}h

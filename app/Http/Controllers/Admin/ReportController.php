@@ -104,42 +104,45 @@ class ReportController extends Controller
      */
     public function attendance(Request $request)
     {
+        // Check if export is requested
+        if ($request->has('export')) {
+            return $this->export($request);
+        }
+
         // Validate filter inputs
         $request->validate([
-            'from_date' => 'nullable|date',
-            'to_date' => 'nullable|date|after_or_equal:from_date',
-            'user_id' => 'nullable|exists:users,id',
-            'department' => 'nullable|string',
-            'status' => 'nullable|in:present,late,absent,on_leave',
-            'shift_id' => 'nullable|exists:shifts,id',
+            'start_date' => 'nullable|date',
+            'end_date' => 'nullable|date|after_or_equal:start_date',
+            'user' => 'nullable|exists:users,id',
+            'client' => 'nullable|exists:clients,id',
+            'shift' => 'nullable|exists:shifts,id',
+            'status' => 'nullable|in:present,late,absent,on_leave,half_day',
         ]);
 
         // Build query with relationships
-        $query = Attendance::with(['user', 'schedule.client', 'schedule.shift', 'qrCode']);
+        $query = Attendance::with(['user', 'client', 'shift']);
 
         // Apply date range filter (default: current month)
-        if ($request->filled('from_date')) {
-            $query->whereDate('attendance_date', '>=', $request->from_date);
+        if ($request->filled('start_date')) {
+            $query->whereDate('attendance_date', '>=', $request->start_date);
         } else {
             $query->whereDate('attendance_date', '>=', now()->startOfMonth()->toDateString());
         }
 
-        if ($request->filled('to_date')) {
-            $query->whereDate('attendance_date', '<=', $request->to_date);
+        if ($request->filled('end_date')) {
+            $query->whereDate('attendance_date', '<=', $request->end_date);
         } else {
             $query->whereDate('attendance_date', '<=', now()->endOfMonth()->toDateString());
         }
 
         // Filter by specific user
-        if ($request->filled('user_id')) {
-            $query->where('user_id', $request->user_id);
+        if ($request->filled('user')) {
+            $query->where('user_id', $request->user);
         }
 
-        // Filter by department
-        if ($request->filled('department')) {
-            $query->whereHas('user', function($q) use ($request) {
-                $q->where('department', $request->department);
-            });
+        // Filter by client
+        if ($request->filled('client')) {
+            $query->where('client_id', $request->client);
         }
 
         // Filter by status
@@ -148,29 +151,31 @@ class ReportController extends Controller
         }
 
         // Filter by shift
-        if ($request->filled('shift_id')) {
-            $query->where('shift_id', $request->shift_id);
+        if ($request->filled('shift')) {
+            $query->where('shift_id', $request->shift);
         }
 
-        // Order by latest first
+        // Clone query for statistics before pagination
+        $statsQuery = clone $query;
+
+        // Order by latest first and paginate
         $attendances = $query->latest('attendance_date')
             ->latest('check_in')
             ->paginate(20)
             ->withQueryString();
 
         // Calculate summary statistics for filtered results
-        $summary = [
-            'total_records' => $query->count(),
-            'total_present' => (clone $query)->where('status', 'present')->count(),
-            'total_late' => (clone $query)->where('status', 'late')->count(),
-            'total_absent' => (clone $query)->where('status', 'absent')->count(),
-            'total_hours' => (clone $query)->sum('work_duration'),
-            'average_hours' => (clone $query)->avg('work_duration'),
-        ];
+        $totalRecords = $statsQuery->count();
+        $totalMinutes = $statsQuery->sum('work_duration');
+        $uniqueStaff = $statsQuery->distinct('user_id')->count('user_id');
+        $avgMinutes = $totalRecords > 0 ? $totalMinutes / $totalRecords : 0;
 
-        // Format hours from minutes
-        $summary['total_hours_formatted'] = round($summary['total_hours'] / 60, 2);
-        $summary['average_hours_formatted'] = round($summary['average_hours'] / 60, 2);
+        $summary = [
+            'total' => $totalRecords,
+            'hours' => round($totalMinutes / 60, 1),
+            'staff' => $uniqueStaff,
+            'avg' => round($avgMinutes / 60, 1),
+        ];
 
         // Get unique departments for filter dropdown
         $departments = User::distinct('department')
@@ -185,15 +190,27 @@ class ReportController extends Controller
             ->map(function($user) {
                 return [
                     'id' => $user->id,
-                    'name' => $user->full_name . ' (' . $user->employee_no . ')',
+                    'name' => ($user->firstname ?? '') . ' ' . ($user->lastname ?? '') . ' (' . ($user->employee_no ?? 'N/A') . ')',
                 ];
             });
+
+        // Get all active clients for filter dropdown
+        $clients = \App\Models\Client::where('status', 'active')
+            ->orderBy('name')
+            ->get();
+
+        // Get all active shifts for filter dropdown
+        $shifts = \App\Models\Shift::where('is_active', true)
+            ->orderBy('start_time')
+            ->get();
 
         return view('admin.reports.attendance', compact(
             'attendances',
             'summary',
             'departments',
-            'users'
+            'users',
+            'clients',
+            'shifts'
         ));
     }
 
@@ -308,34 +325,30 @@ class ReportController extends Controller
         try {
             // Validate the request
             $validated = $request->validate([
-                'type' => 'required|in:attendance,schedules',
-                'format' => 'required|in:excel,pdf',
-                'from_date' => 'nullable|date',
-                'to_date' => 'nullable|date|after_or_equal:from_date',
-                'user_id' => 'nullable|exists:users,id',
-                'department' => 'nullable|string',
-                'client_id' => 'nullable|exists:clients,id',
+                'export' => 'required|in:excel,pdf,csv',
+                'start_date' => 'nullable|date',
+                'end_date' => 'nullable|date|after_or_equal:start_date',
+                'user' => 'nullable|exists:users,id',
+                'client' => 'nullable|exists:clients,id',
+                'shift' => 'nullable|exists:shifts,id',
                 'status' => 'nullable|string',
             ]);
 
-            $type = $validated['type'];
-            $format = $validated['format'];
+            $format = $validated['export'];
 
-            // Build data query based on type
-            if ($type === 'attendance') {
-                $data = $this->buildAttendanceExportData($request);
-            } else {
-                $data = $this->buildSchedulesExportData($request);
-            }
+            // Build attendance data
+            $data = $this->buildAttendanceExportData($request);
 
             // Generate filename
-            $filename = $type . '_report_' . now()->format('Y-m-d_His');
+            $filename = 'attendance_report_' . now()->format('Y-m-d_His');
 
             // Export based on format
             if ($format === 'excel') {
-                return $this->exportToExcel($data, $type, $filename);
+                return $this->exportToExcel($data, 'attendance', $filename);
+            } elseif ($format === 'csv') {
+                return $this->exportToCsv($data, $filename);
             } else {
-                return $this->exportToPdf($data, $type, $filename);
+                return $this->exportToPdf($data, 'attendance', $filename);
             }
 
         } catch (\Exception $e) {
@@ -508,22 +521,23 @@ class ReportController extends Controller
      */
     private function buildAttendanceExportData(Request $request)
     {
-        $query = Attendance::with(['user', 'schedule.client', 'schedule.shift']);
+        $query = Attendance::with(['user', 'client', 'shift']);
 
         // Apply filters
-        if ($request->filled('from_date')) {
-            $query->whereDate('attendance_date', '>=', $request->from_date);
+        if ($request->filled('start_date')) {
+            $query->whereDate('attendance_date', '>=', $request->start_date);
         }
-        if ($request->filled('to_date')) {
-            $query->whereDate('attendance_date', '<=', $request->to_date);
+        if ($request->filled('end_date')) {
+            $query->whereDate('attendance_date', '<=', $request->end_date);
         }
-        if ($request->filled('user_id')) {
-            $query->where('user_id', $request->user_id);
+        if ($request->filled('user')) {
+            $query->where('user_id', $request->user);
         }
-        if ($request->filled('department')) {
-            $query->whereHas('user', function($q) use ($request) {
-                $q->where('department', $request->department);
-            });
+        if ($request->filled('client')) {
+            $query->where('client_id', $request->client);
+        }
+        if ($request->filled('shift')) {
+            $query->where('shift_id', $request->shift);
         }
         if ($request->filled('status')) {
             $query->where('status', $request->status);
@@ -607,6 +621,47 @@ class ReportController extends Controller
         ]);
 
         return $pdf->download($filename . '.pdf');
+    }
+
+    /**
+     * Export data to CSV format
+     *
+     * @param \Illuminate\Support\Collection $data
+     * @param string $filename
+     * @return \Symfony\Component\HttpFoundation\StreamedResponse
+     */
+    private function exportToCsv($data, $filename)
+    {
+        $headers = [
+            'Content-Type' => 'text/csv',
+            'Content-Disposition' => 'attachment; filename="' . $filename . '.csv"',
+        ];
+
+        $callback = function() use ($data) {
+            $file = fopen('php://output', 'w');
+
+            // Add CSV headers
+            fputcsv($file, ['Date', 'Staff Member', 'Employee No', 'Client', 'Shift', 'Check In', 'Check Out', 'Hours', 'Status']);
+
+            // Add data rows
+            foreach ($data as $attendance) {
+                fputcsv($file, [
+                    $attendance->attendance_date ? $attendance->attendance_date->format('M d, Y') : 'N/A',
+                    $attendance->user ? ($attendance->user->firstname . ' ' . $attendance->user->lastname) : 'N/A',
+                    $attendance->user->employee_no ?? 'N/A',
+                    $attendance->client->name ?? 'N/A',
+                    $attendance->shift->name ?? 'N/A',
+                    $attendance->check_in ? $attendance->check_in->format('h:i A') : '-',
+                    $attendance->check_out ? $attendance->check_out->format('h:i A') : '-',
+                    round(($attendance->work_duration ?? 0) / 60, 2),
+                    ucfirst($attendance->status ?? 'N/A'),
+                ]);
+            }
+
+            fclose($file);
+        };
+
+        return response()->stream($callback, 200, $headers);
     }
 
     /**

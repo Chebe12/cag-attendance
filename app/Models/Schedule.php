@@ -38,9 +38,8 @@ class Schedule extends Model
     public static function getSessionTimes($session)
     {
         $times = [
-            'morning' => ['start' => '08:30:00', 'end' => '10:00:00'],
-            'mid-morning' => ['start' => '10:30:00', 'end' => '12:00:00'],
-            'afternoon' => ['start' => '12:30:00', 'end' => '14:00:00'],
+            'morning' => ['start' => '08:30:00', 'end' => '11:00:00'],
+            'afternoon' => ['start' => '12:00:00', 'end' => '14:30:00'],
         ];
 
         return $times[$session] ?? null;

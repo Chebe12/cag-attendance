@@ -194,13 +194,11 @@
                             <tr>
                                 <td class="border border-gray-300 px-3 py-2 font-semibold text-sm
                                     @if($session === 'morning') bg-green-50
-                                    @elseif($session === 'mid-morning') bg-blue-50
                                     @else bg-purple-50
                                     @endif">
                                     <div class="flex items-center gap-2">
                                         <svg class="w-4 h-4 flex-shrink-0
                                             @if($session === 'morning') text-green-600
-                                            @elseif($session === 'mid-morning') text-blue-600
                                             @else text-purple-600
                                             @endif" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                             @if($session === 'afternoon')

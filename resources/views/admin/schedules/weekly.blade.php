@@ -211,7 +211,7 @@
                             </svg>
                             <div>
                                 <div class="font-semibold text-sm text-gray-900">Morning</div>
-                                <div class="text-xs text-gray-600">8:30 AM - 10:00 AM</div>
+                                <div class="text-xs text-gray-600">8:30 AM - 11:00 AM</div>
                             </div>
                         </div>
                     </td>
@@ -220,44 +220,6 @@
                         @if($weekSchedule[$day]['sessions']['morning']->count() > 0)
                             @foreach($weekSchedule[$day]['sessions']['morning'] as $schedule)
                                 <div class="schedule-item bg-green-100 border-l-4 border-green-500">
-                                    <div class="font-semibold text-gray-900 mb-1">{{ $schedule->user->name ?? 'N/A' }}</div>
-                                    <div class="text-gray-700 font-medium">{{ $schedule->client->name ?? 'N/A' }}</div>
-                                    @if($schedule->client->address)
-                                    <div class="text-gray-600 text-xs mt-1 flex items-center gap-1">
-                                        <svg class="w-3 h-3 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M17.657 16.657L13.414 20.9a1.998 1.998 0 01-2.827 0l-4.244-4.243a8 8 0 1111.314 0z"/>
-                                            <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M15 11a3 3 0 11-6 0 3 3 0 016 0z"/>
-                                        </svg>
-                                        {{ Str::limit($schedule->client->address, 35) }}
-                                    </div>
-                                    @endif
-                                </div>
-                            @endforeach
-                        @else
-                            <div class="text-center py-4 text-gray-400 text-sm italic">No schedules</div>
-                        @endif
-                    </td>
-                    @endforeach
-                </tr>
-
-                <!-- Mid-Morning Session Row -->
-                <tr>
-                    <td class="border border-gray-300 px-4 py-3 bg-blue-50">
-                        <div class="flex items-center gap-2">
-                            <svg class="w-5 h-5 text-blue-600 flex-shrink-0" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                                <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 3v1m0 16v1m9-9h-1M4 12H3m15.364 6.364l-.707-.707M6.343 6.343l-.707-.707m12.728 0l-.707.707M6.343 17.657l-.707.707M16 12a4 4 0 11-8 0 4 4 0 018 0z"/>
-                            </svg>
-                            <div>
-                                <div class="font-semibold text-sm text-gray-900">Mid-Morning</div>
-                                <div class="text-xs text-gray-600">10:30 AM - 12:00 PM</div>
-                            </div>
-                        </div>
-                    </td>
-                    @foreach(['monday', 'tuesday', 'wednesday', 'thursday', 'friday'] as $day)
-                    <td class="border border-gray-300 px-3 py-3 schedule-cell bg-white">
-                        @if($weekSchedule[$day]['sessions']['mid-morning']->count() > 0)
-                            @foreach($weekSchedule[$day]['sessions']['mid-morning'] as $schedule)
-                                <div class="schedule-item bg-blue-100 border-l-4 border-blue-500">
                                     <div class="font-semibold text-gray-900 mb-1">{{ $schedule->user->name ?? 'N/A' }}</div>
                                     <div class="text-gray-700 font-medium">{{ $schedule->client->name ?? 'N/A' }}</div>
                                     @if($schedule->client->address)
@@ -287,7 +249,7 @@
                             </svg>
                             <div>
                                 <div class="font-semibold text-sm text-gray-900">Afternoon</div>
-                                <div class="text-xs text-gray-600">12:30 PM - 2:00 PM</div>
+                                <div class="text-xs text-gray-600">12:00 PM - 2:30 PM</div>
                             </div>
                         </div>
                     </td>
@@ -328,26 +290,20 @@
         </svg>
         Session Legend
     </h3>
-    <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
+    <div class="grid grid-cols-1 md:grid-cols-2 gap-4">
         <div class="flex items-center gap-3 p-3 bg-green-50 rounded-lg border border-green-200">
             <div class="w-1 h-12 bg-green-500 rounded"></div>
             <div>
                 <div class="font-semibold text-sm text-gray-900">Morning Session</div>
-                <div class="text-xs text-gray-600">8:30 AM - 10:00 AM</div>
+                <div class="text-xs text-gray-600">8:30 AM - 11:00 AM</div>
             </div>
         </div>
-        <div class="flex items-center gap-3 p-3 bg-blue-50 rounded-lg border border-blue-200">
-            <div class="w-1 h-12 bg-blue-500 rounded"></div>
-            <div>
-                <div class="font-semibold text-sm text-gray-900">Mid-Morning Session</div>
-                <div class="text-xs text-gray-600">10:30 AM - 12:00 PM</div>
-            </div>
         </div>
         <div class="flex items-center gap-3 p-3 bg-purple-50 rounded-lg border border-purple-200">
             <div class="w-1 h-12 bg-purple-500 rounded"></div>
             <div>
                 <div class="font-semibold text-sm text-gray-900">Afternoon Session</div>
-                <div class="text-xs text-gray-600">12:30 PM - 2:00 PM</div>
+                <div class="text-xs text-gray-600">12:00 PM - 2:30 PM</div>
             </div>
         </div>
     </div>

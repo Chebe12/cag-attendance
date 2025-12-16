@@ -152,8 +152,8 @@
                             </div>
                             <div class="px-6 py-4">
                                 <div class="grid grid-cols-1 md:grid-cols-3 gap-4">
-                                    @foreach(['morning', 'mid-morning', 'afternoon'] as $session)
-                                        <div class="border rounded-lg p-4 {{ $session === 'morning' ? 'bg-green-50' : ($session === 'mid-morning' ? 'bg-blue-50' : 'bg-purple-50') }}">
+                                    @foreach(['morning', 'afternoon'] as $session)
+                                        <div class="border rounded-lg p-4 {{ $session === 'morning' ? 'bg-green-50' : 'bg-purple-50' }}">
                                             <h4 class="text-sm font-semibold text-gray-900 mb-2">
                                                 {{ ucfirst(str_replace('-', ' ', $session)) }}
                                                 @php

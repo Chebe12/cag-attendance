@@ -31,7 +31,7 @@ class Client extends Model
 
     public function shifts()
     {
-        return $this->hasMany(Shift::class);
+        return $this->hasManyThrough(Shift::class, Schedule::class, 'client_id', 'id', 'id', 'shift_id');
     }
 
     public function scopeActive($query)

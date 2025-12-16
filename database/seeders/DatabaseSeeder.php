@@ -25,5 +25,8 @@ class DatabaseSeeder extends Seeder
 
         // Seed QR codes (depends on users being seeded)
         $this->call(QrCodeSeeder::class);
+
+        // Seed demo attendance reports (depends on users, clients, and shifts)
+        $this->call(AttendanceReportSeeder::class);
     }
 }

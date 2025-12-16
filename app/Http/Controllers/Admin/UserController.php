@@ -7,7 +7,10 @@ use App\Models\User;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\Hash;
 use Illuminate\Support\Facades\Storage;
+use Illuminate\Support\Facades\Log;
 use Illuminate\Validation\Rule;
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class UserController extends Controller
 {
@@ -362,5 +365,80 @@ class UserController extends Controller
         return redirect()
             ->route('admin.users.index')
             ->with('success', $message);
+    }
+
+    /**
+     * Export users data
+     *
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\Response
+     */
+    public function export(Request $request)
+    {
+        try {
+            // Validate the request
+            $validated = $request->validate([
+                'format' => 'required|in:excel,pdf,csv',
+                'search' => 'nullable|string',
+                'user_type' => 'nullable|string',
+                'department' => 'nullable|string',
+                'status' => 'nullable|in:active,inactive',
+            ]);
+
+            $format = $validated['format'];
+
+            // Build query with same filters as index
+            $query = User::query();
+
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->where('employee_no', 'like', '%' . $search . '%')
+                      ->orWhere('firstname', 'like', '%' . $search . '%')
+                      ->orWhere('middlename', 'like', '%' . $search . '%')
+                      ->orWhere('lastname', 'like', '%' . $search . '%')
+                      ->orWhere('email', 'like', '%' . $search . '%')
+                      ->orWhere('department', 'like', '%' . $search . '%');
+                });
+            }
+
+            if ($request->filled('user_type')) {
+                $query->where('user_type', $request->user_type);
+            }
+
+            if ($request->filled('department')) {
+                $query->where('department', $request->department);
+            }
+
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            $data = $query->orderBy('firstname')->get();
+
+            // Generate filename
+            $filename = 'users_report_' . now()->format('Y-m-d_His');
+
+            // Export based on format
+            if ($format === 'excel') {
+                return Excel::download(new \App\Exports\UserExport($data), $filename . '.xlsx');
+            } elseif ($format === 'csv') {
+                return Excel::download(new \App\Exports\UserExport($data), $filename . '.csv', \Maatwebsite\Excel\Excel::CSV);
+            } else {
+                $pdf = Pdf::loadView('admin.exports.pdf.users', [
+                    'data' => $data,
+                    'generated_at' => now()->format('Y-m-d H:i:s'),
+                ]);
+                return $pdf->download($filename . '.pdf');
+            }
+
+        } catch (\Exception $e) {
+            Log::error('User Export Error: ' . $e->getMessage(), [
+                'request' => $request->all(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return back()->with('error', 'An error occurred while exporting users. Please try again.');
+        }
     }
 }

@@ -105,6 +105,7 @@
                 <div class="flex items-center flex-shrink-0 px-6 py-5 bg-green-950">
                     <div class="flex items-center">
                         <img src="{{ asset('storage/logo.png') }}" alt="CA Global" class="h-10 w-auto">
+                        <span class="ml-3 text-white font-semibold text-lg">Global</span>
                     </div>
                 </div>
 
@@ -157,16 +158,78 @@
                     <!-- User menu -->
                     <div class="flex items-center space-x-4">
                         <!-- Notifications -->
-                        <button class="p-2 text-gray-400 hover:text-gray-500 relative">
+                        {{-- <button class="p-2 text-gray-400 hover:text-gray-500 relative">
                             <svg class="h-6 w-6" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
                                     d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
                             </svg>
                             <span
                                 class="absolute top-1.5 right-1.5 block h-2 w-2 rounded-full bg-orange-500 ring-2 ring-white"></span>
-                        </button>
+                        </button> --}}
 
                         <!-- User dropdown -->
+                        <!-- Notification Bell -->
+                        <div x-data="{ open: false, count: 0 }" x-init="
+                            fetch('{{ route('notifications.unread') }}')
+                                .then(r => r.json())
+                                .then(data => count = data.count)
+                        " class="relative mr-4">
+                            <button @click="open = !open" class="relative p-2 hover:bg-gray-50 rounded-lg transition">
+                                <svg class="h-6 w-6 text-gray-600" fill="none" stroke="currentColor"
+                                    viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2"
+                                        d="M15 17h5l-1.405-1.405A2.032 2.032 0 0118 14.158V11a6.002 6.002 0 00-4-5.659V5a2 2 0 10-4 0v.341C7.67 6.165 6 8.388 6 11v3.159c0 .538-.214 1.055-.595 1.436L4 17h5m6 0v1a3 3 0 11-6 0v-1m6 0H9" />
+                                </svg>
+                                <span x-show="count > 0" x-text="count"
+                                    class="absolute top-0 right-0 inline-flex items-center justify-center px-1.5 py-0.5 text-xs font-bold leading-none text-white transform translate-x-1/2 -translate-y-1/2 bg-red-600 rounded-full min-w-[20px]">
+                                </span>
+                            </button>
+
+                            <!-- Notifications Dropdown -->
+                            <div x-show="open" @click.away="open = false"
+                                x-transition:enter="transition ease-out duration-100"
+                                x-transition:enter-start="transform opacity-0 scale-95"
+                                x-transition:enter-end="transform opacity-100 scale-100"
+                                x-transition:leave="transition ease-in duration-75"
+                                x-transition:leave-start="transform opacity-100 scale-100"
+                                x-transition:leave-end="transform opacity-0 scale-95"
+                                class="absolute right-0 mt-2 w-80 rounded-lg shadow-lg bg-white ring-1 ring-black ring-opacity-5"
+                                style="display: none;">
+                                <div class="p-4 border-b border-gray-200">
+                                    <div class="flex items-center justify-between">
+                                        <h3 class="text-sm font-semibold text-gray-900">Notifications</h3>
+                                        <a href="{{ route('notifications.index') }}"
+                                            class="text-xs text-green-600 hover:text-green-700 font-medium">
+                                            View All
+                                        </a>
+                                    </div>
+                                </div>
+                                <div class="max-h-96 overflow-y-auto">
+                                    <div x-data="{ notifications: [] }" x-init="
+                                        fetch('{{ route('notifications.unread') }}')
+                                            .then(r => r.json())
+                                            .then(data => notifications = data.notifications)
+                                    ">
+                                        <template x-if="notifications.length === 0">
+                                            <div class="p-8 text-center">
+                                                <p class="text-sm text-gray-500">No new notifications</p>
+                                            </div>
+                                        </template>
+                                        <template x-for="notif in notifications" :key="notif.id">
+                                            <a :href="notif.action_url || '{{ route('notifications.index') }}'"
+                                                class="block px-4 py-3 hover:bg-gray-50 border-b border-gray-100 transition">
+                                                <p class="text-sm font-medium text-gray-900" x-text="notif.title">
+                                                </p>
+                                                <p class="text-xs text-gray-600 mt-1 line-clamp-2"
+                                                    x-text="notif.message"></p>
+                                            </a>
+                                        </template>
+                                    </div>
+                                </div>
+                            </div>
+                        </div>
+
+                        <!-- User Dropdown -->
                         <div x-data="{ open: false }" class="relative">
                             <button @click="open = !open"
                                 class="flex items-center space-x-3 hover:bg-gray-50 rounded-lg px-3 py-2 transition">
@@ -174,7 +237,8 @@
                                     class="w-8 h-8 rounded-full bg-gradient-to-br from-orange-400 to-orange-600 flex items-center justify-center text-white font-semibold text-sm">
                                     {{ substr(auth()->user()->name, 0, 1) }}
                                 </div>
-                                <span class="hidden md:block text-sm font-medium text-gray-700">{{ auth()->user()->name
+                                <span class="hidden md:block text-sm font-medium text-gray-700">{{
+                                    auth()->user()->name
                                     }}</span>
                                 <svg class="h-5 w-5 text-gray-400" fill="none" stroke="currentColor"
                                     viewBox="0 0 24 24">
