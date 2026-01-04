@@ -124,7 +124,7 @@
                                     class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('user_id') border-red-500 @enderror">
                                 <option value="">Select Staff Member</option>
                                 @foreach($users as $user)
-                                <option value="{{ $user->id }}" {{ old('user_id') == $user->id ? 'selected' : '' }}>
+                                <option value="{{ $user->id }}" {{ (old('user_id') ?? request('user_id')) == $user->id ? 'selected' : '' }}>
                                     {{ $user->full_name }} ({{ $user->employee_no }})
                                 </option>
                                 @endforeach
@@ -166,13 +166,10 @@
                                     class="block w-full px-4 py-2 border border-gray-300 rounded-lg focus:ring-green-500 focus:border-green-500 @error('session_time') border-red-500 @enderror">
                                 <option value="">Select Session</option>
                                 <option value="morning" {{ old('session_time') == 'morning' ? 'selected' : '' }}>
-                                    Morning Session (8:30 AM - 10:00 AM)
-                                </option>
-                                <option value="mid-morning" {{ old('session_time') == 'mid-morning' ? 'selected' : '' }}>
-                                    Mid-Morning Session (10:30 AM - 12:00 PM)
+                                    Morning Session (8:30 AM - 11:00 AM)
                                 </option>
                                 <option value="afternoon" {{ old('session_time') == 'afternoon' ? 'selected' : '' }}>
-                                    Afternoon Session (12:30 PM - 2:00 PM)
+                                    Afternoon Session (12:00 PM - 2:30 PM)
                                 </option>
                             </select>
                             @error('session_time')

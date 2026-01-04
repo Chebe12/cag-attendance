@@ -84,7 +84,7 @@
                             <dd class="mt-1 text-sm text-gray-900">
                                 <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                     {{ $schedule->session_time == 'morning' ? 'bg-blue-100 text-blue-800' : '' }}
-                                    {{ $schedule->session_time == 'mid-morning' ? 'bg-purple-100 text-purple-800' : '' }}
+                                    
                                     {{ $schedule->session_time == 'afternoon' ? 'bg-orange-100 text-orange-800' : '' }}">
                                     {{ ucfirst(str_replace('-', ' ', $schedule->session_time ?? 'N/A')) }}
                                 </span>

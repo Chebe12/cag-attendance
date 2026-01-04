@@ -2,6 +2,9 @@
 
 use Illuminate\Support\Facades\Route;
 use App\Http\Controllers\AuthController;
+use App\Http\Controllers\ProfileController;
+use App\Http\Controllers\SettingsController;
+use App\Http\Controllers\NotificationController;
 use App\Http\Controllers\Admin\DashboardController as AdminDashboardController;
 use App\Http\Controllers\Admin\UserController;
 use App\Http\Controllers\Admin\ClientController;
@@ -62,14 +65,21 @@ Route::middleware('auth')->group(function () {
     // Logout route
     Route::post('/logout', [AuthController::class, 'logout'])->name('logout');
 
-    // Profile and Settings (stub routes - redirect to dashboard for now)
-    Route::get('/profile', function () {
-        return redirect()->route('dashboard');
-    })->name('profile.edit');
+    // Profile Routes
+    Route::get('/profile', [ProfileController::class, 'edit'])->name('profile.edit');
+    Route::put('/profile', [ProfileController::class, 'update'])->name('profile.update');
+    Route::put('/profile/password', [ProfileController::class, 'updatePassword'])->name('profile.password.update');
 
-    Route::get('/settings', function () {
-        return redirect()->route('dashboard');
-    })->name('settings');
+    // Settings Routes
+    Route::get('/settings', [SettingsController::class, 'index'])->name('settings');
+    Route::put('/settings', [SettingsController::class, 'update'])->name('settings.update');
+
+    // Notification Routes
+    Route::get('/notifications', [NotificationController::class, 'index'])->name('notifications.index');
+    Route::get('/notifications/unread', [NotificationController::class, 'unread'])->name('notifications.unread');
+    Route::post('/notifications/{id}/read', [NotificationController::class, 'markAsRead'])->name('notifications.read');
+    Route::post('/notifications/read-all', [NotificationController::class, 'markAllAsRead'])->name('notifications.read.all');
+    Route::delete('/notifications/{id}', [NotificationController::class, 'destroy'])->name('notifications.destroy');
 });
 
 // ============================================================================
@@ -82,15 +92,18 @@ Route::middleware(['auth', 'check.user.type:admin'])->prefix('admin')->name('adm
     Route::get('/dashboard', [AdminDashboardController::class, 'index'])->name('dashboard');
 
     // Users Management (CRUD)
+    Route::get('/users/export', [UserController::class, 'export'])->name('users.export');
     Route::resource('users', UserController::class);
 
     // Clients Management (CRUD)
+    Route::get('/clients/export', [ClientController::class, 'export'])->name('clients.export');
     Route::resource('clients', ClientController::class);
 
     // Shifts Management (CRUD)
     Route::resource('shifts', ShiftController::class);
 
     // Schedules Management (CRUD)
+    Route::get('/schedules/export', [ScheduleController::class, 'export'])->name('schedules.export');
     Route::get('/schedules/availability', [ScheduleController::class, 'availability'])->name('schedules.availability');
     Route::get('/schedules/print', [ScheduleController::class, 'printView'])->name('schedules.print');
     Route::get('/schedules/weekly', [ScheduleController::class, 'weeklyOverview'])->name('schedules.weekly');

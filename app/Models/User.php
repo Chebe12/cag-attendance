@@ -116,6 +116,16 @@ class User extends Authenticatable
         return $this->hasOne(Department::class, 'head_of_department');
     }
 
+    public function notifications()
+    {
+        return $this->hasMany(Notification::class)->orderBy('created_at', 'desc');
+    }
+
+    public function unreadNotifications()
+    {
+        return $this->hasMany(Notification::class)->where('is_read', false)->orderBy('created_at', 'desc');
+    }
+
     // Scope for active users
     public function scopeActive($query)
     {

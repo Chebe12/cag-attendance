@@ -113,7 +113,6 @@
                                     @php
                                         $sessionColors = [
                                             'morning' => 'bg-blue-100 text-blue-800',
-                                            'mid-morning' => 'bg-purple-100 text-purple-800',
                                             'afternoon' => 'bg-orange-100 text-orange-800',
                                         ];
                                     @endphp

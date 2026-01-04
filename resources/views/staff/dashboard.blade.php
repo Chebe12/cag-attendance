@@ -46,7 +46,7 @@
                             <div class="flex items-center justify-between">
                                 <div>
                                     <p class="text-sm text-green-100">Checked in at</p>
-                                    <p class="text-xl font-bold">{{ \Carbon\Carbon::parse($todayAttendance->check_in)->format('g:i A') }}</p>
+                                    <p class="text-xl font-bold">{{ $todayAttendance->check_in ? \Carbon\Carbon::parse($todayAttendance->check_in)->format('g:i A') : '-' }}</p>
                                 </div>
                                 <div class="flex h-3 w-3">
                                     <span class="animate-ping absolute inline-flex h-3 w-3 rounded-full bg-white opacity-75"></span>
@@ -71,6 +71,20 @@
                             <p class="text-center mt-2 font-semibold">Attendance Completed</p>
                             <p class="text-center text-sm text-green-100">You've checked out for today</p>
                         </div>
+                    </div>
+                @else
+                    <!-- Attendance exists but no check_in - Show Check In -->
+                    <div class="mt-6">
+                        <a href="{{ route('staff.attendance.mark') }}"
+                           class="block w-full text-center bg-white text-green-600 rounded-lg px-6 py-4 text-lg font-semibold hover:bg-green-50 transition-colors shadow-lg transform hover:scale-105 transition-transform duration-200">
+                            <div class="flex items-center justify-center">
+                                <svg class="h-6 w-6 mr-2" fill="none" stroke="currentColor" viewBox="0 0 24 24">
+                                    <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v1m6 11h2m-6 0h-2v4m0-11v3m0 0h.01M12 12h4.01M16 20h4M4 12h4m12 0h.01M5 8h2a1 1 0 001-1V5a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1zm12 0h2a1 1 0 001-1V5a1 1 0 00-1-1h-2a1 1 0 00-1 1v2a1 1 0 001 1zM5 20h2a1 1 0 001-1v-2a1 1 0 00-1-1H5a1 1 0 00-1 1v2a1 1 0 001 1z"/>
+                                </svg>
+                                Scan QR to Check In
+                            </div>
+                        </a>
+                        <p class="text-center text-sm text-green-100 mt-3">You haven't checked in today</p>
                     </div>
                 @endif
             @else
@@ -155,7 +169,7 @@
             ->where('draft_status', 'published')
             ->with(['client', 'category'])
             ->orderByRaw("FIELD(day_of_week, 'monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday')")
-            ->orderByRaw("FIELD(session_time, 'morning', 'mid-morning', 'afternoon')")
+            ->orderByRaw("FIELD(session_time, 'morning', 'afternoon')")
             ->get()
             ->groupBy('day_of_week');
     }
@@ -195,7 +209,6 @@
                             @php
                                 $sessionColors = [
                                     'morning' => 'bg-green-100 text-green-800 border-green-300',
-                                    'mid-morning' => 'bg-blue-100 text-blue-800 border-blue-300',
                                     'afternoon' => 'bg-purple-100 text-purple-800 border-purple-300',
                                 ];
                             @endphp

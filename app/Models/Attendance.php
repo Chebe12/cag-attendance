@@ -23,6 +23,10 @@ class Attendance extends Model
         'check_out_location',
         'check_in_ip',
         'check_out_ip',
+        'check_in_latitude',
+        'check_in_longitude',
+        'check_out_latitude',
+        'check_out_longitude',
         'status',
         'work_duration',
         'notes',
@@ -83,6 +87,17 @@ class Attendance extends Model
     {
         return $query->whereYear('attendance_date', now()->year)
                      ->whereMonth('attendance_date', now()->month);
+    }
+
+    /**
+     * Get the work duration in hours
+     */
+    public function getHoursAttribute()
+    {
+        if ($this->work_duration) {
+            return round($this->work_duration / 60, 2);
+        }
+        return 0.0;
     }
 
     public function calculateDuration()

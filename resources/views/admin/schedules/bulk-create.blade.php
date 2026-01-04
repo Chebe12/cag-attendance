@@ -99,15 +99,12 @@
             <div class="flex gap-4 text-sm mb-4">
                 <div class="flex items-center gap-2">
                     <div class="w-4 h-4 bg-green-100 border border-green-300 rounded"></div>
-                    <span>Morning (8:30-10:00)</span>
+                    <span>Morning (8:30-11:00)</span>
                 </div>
-                <div class="flex items-center gap-2">
-                    <div class="w-4 h-4 bg-blue-100 border border-blue-300 rounded"></div>
-                    <span>Mid-morning (10:30-12:00)</span>
-                </div>
+                
                 <div class="flex items-center gap-2">
                     <div class="w-4 h-4 bg-purple-100 border border-purple-300 rounded"></div>
-                    <span>Afternoon (12:30-14:00)</span>
+                    <span>Afternoon (12:00-14:30)</span>
                 </div>
             </div>
         </div>
@@ -121,7 +118,7 @@
                             Client
                         </th>
                         @foreach(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as $day)
-                            <th colspan="3" class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase border-l border-gray-300">
+                            <th colspan="2" class="px-2 py-3 text-center text-xs font-medium text-gray-500 uppercase border-l border-gray-300">
                                 {{ ucfirst($day) }}
                             </th>
                         @endforeach
@@ -135,7 +132,6 @@
                         </th>
                         @foreach(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as $day)
                             <th class="px-1 py-2 text-center text-xs text-gray-500 bg-green-50 border-l border-gray-300">M</th>
-                            <th class="px-1 py-2 text-center text-xs text-gray-500 bg-blue-50">MM</th>
                             <th class="px-1 py-2 text-center text-xs text-gray-500 bg-purple-50">A</th>
                         @endforeach
                         <th class="sticky right-0 bg-gray-100"></th>
@@ -159,9 +155,9 @@
 
                             <!-- Days and Sessions Grid -->
                             @foreach(['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'] as $dayIndex => $day)
-                                @foreach(['morning', 'mid-morning', 'afternoon'] as $sessionIndex => $session)
+                                @foreach(['morning', 'afternoon'] as $sessionIndex => $session)
                                     @php
-                                        $bgColor = $session === 'morning' ? 'bg-green-50' : ($session === 'mid-morning' ? 'bg-blue-50' : 'bg-purple-50');
+                                        $bgColor = $session === 'morning' ? 'bg-green-50' : 'bg-purple-50';
                                         $borderClass = $session === 'morning' ? 'border-l border-gray-300' : '';
                                     @endphp
                                     <td class="px-2 py-2 {{ $bgColor }} {{ $borderClass }}" style="min-width: 160px;">
@@ -224,7 +220,7 @@
 
                     <!-- Empty State -->
                     <tr x-show="scheduleRows.length === 0">
-                        <td colspan="23" class="px-6 py-12 text-center">
+                        <td colspan="16" class="px-6 py-12 text-center">
                             <svg class="mx-auto h-12 w-12 text-gray-400" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                                 <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 4v16m8-8H4"/>
                             </svg>
@@ -288,7 +284,7 @@
                     <p>2. Click "Add Client" to add rows for each client</p>
                     <p>3. For each client, click on a session cell to add instructors (you can add multiple instructors)</p>
                     <p>4. Click the X button on an instructor tag to remove them</p>
-                    <p>5. M = Morning (8:30-10:00), MM = Mid-morning (10:30-12:00), A = Afternoon (12:30-14:00)</p>
+                    <p>5. M = Morning (8:30-11:00), A = Afternoon (12:00-14:30)</p>
                     <p>6. The system will warn you if an instructor is double-booked</p>
                     <p>7. Save as Draft to continue later, or Publish to activate schedules</p>
                 </div>
@@ -345,7 +341,6 @@ function bulkScheduleManager() {
             ['monday', 'tuesday', 'wednesday', 'thursday', 'friday', 'saturday', 'sunday'].forEach(day => {
                 sessions[day] = {
                     'morning': [],
-                    'mid-morning': [],
                     'afternoon': []
                 };
             });

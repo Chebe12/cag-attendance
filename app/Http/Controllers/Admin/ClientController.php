@@ -5,6 +5,9 @@ namespace App\Http\Controllers\Admin;
 use App\Http\Controllers\Controller;
 use App\Models\Client;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Log;
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ClientController extends Controller
 {
@@ -386,5 +389,70 @@ class ClientController extends Controller
         return redirect()
             ->back()
             ->with('success', $message);
+    }
+
+    /**
+     * Export clients data
+     *
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\Response
+     */
+    public function export(Request $request)
+    {
+        try {
+            // Validate the request
+            $validated = $request->validate([
+                'format' => 'required|in:excel,pdf,csv',
+                'search' => 'nullable|string',
+                'status' => 'nullable|in:active,inactive',
+            ]);
+
+            $format = $validated['format'];
+
+            // Build query with same filters as index
+            $query = Client::query();
+
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->where('name', 'like', "%{$search}%")
+                      ->orWhere('email', 'like', "%{$search}%")
+                      ->orWhere('phone', 'like', "%{$search}%")
+                      ->orWhere('address', 'like', "%{$search}%")
+                      ->orWhere('city', 'like', "%{$search}%")
+                      ->orWhere('contact_person', 'like', "%{$search}%");
+                });
+            }
+
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            $data = $query->orderBy('name')->get();
+
+            // Generate filename
+            $filename = 'clients_report_' . now()->format('Y-m-d_His');
+
+            // Export based on format
+            if ($format === 'excel') {
+                return Excel::download(new \App\Exports\ClientExport($data), $filename . '.xlsx');
+            } elseif ($format === 'csv') {
+                return Excel::download(new \App\Exports\ClientExport($data), $filename . '.csv', \Maatwebsite\Excel\Excel::CSV);
+            } else {
+                $pdf = Pdf::loadView('admin.exports.pdf.clients', [
+                    'data' => $data,
+                    'generated_at' => now()->format('Y-m-d H:i:s'),
+                ]);
+                return $pdf->download($filename . '.pdf');
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Client Export Error: ' . $e->getMessage(), [
+                'request' => $request->all(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return back()->with('error', 'An error occurred while exporting clients. Please try again.');
+        }
     }
 }

@@ -43,9 +43,8 @@ class BulkScheduleController extends Controller
 
         // Sessions
         $sessions = [
-            'morning' => '8:30 AM - 10:00 AM',
-            'mid-morning' => '10:30 AM - 12:00 PM',
-            'afternoon' => '12:30 PM - 2:00 PM',
+            'morning' => '8:30 AM - 11:00 AM',
+            'afternoon' => '12:00 PM - 2:30 PM',
         ];
 
         // If editing existing schedules, load them (both published and drafts)
@@ -89,7 +88,7 @@ class BulkScheduleController extends Controller
             'schedules' => 'required|array',
             'schedules.*.client_id' => 'required|exists:clients,id',
             'schedules.*.day_of_week' => 'required|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
-            'schedules.*.session_time' => 'required|in:morning,mid-morning,afternoon',
+            'schedules.*.session_time' => 'required|in:morning,afternoon',
             'schedules.*.instructor_ids' => 'required|array|min:1',
             'schedules.*.instructor_ids.*' => 'required|exists:users,id',
             'draft_status' => 'required|in:draft,published',

@@ -234,7 +234,6 @@
                                 <td class="px-6 py-4 whitespace-nowrap">
                                     <span class="inline-flex items-center px-2.5 py-0.5 rounded-full text-xs font-medium
                                         @if($schedule->session_time === 'morning') bg-green-100 text-green-800
-                                        @elseif($schedule->session_time === 'mid-morning') bg-blue-100 text-blue-800
                                         @else bg-purple-100 text-purple-800
                                         @endif">
                                         {{ ucfirst(str_replace('-', ' ', $schedule->session_time ?? 'N/A')) }}

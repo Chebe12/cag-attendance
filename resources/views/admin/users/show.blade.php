@@ -141,13 +141,13 @@
                                         </div>
                                         <div class="min-w-0 flex-1 pt-1.5 flex justify-between space-x-4">
                                             <div>
-                                                <p class="text-sm text-gray-900">Check In: <span class="font-medium">{{ $attendance->check_in->format('h:i A') }}</span></p>
+                                                <p class="text-sm text-gray-900">Check In: <span class="font-medium">{{ $attendance->check_in ? $attendance->check_in->format('h:i A') : '-' }}</span></p>
                                                 @if($attendance->check_out)
                                                 <p class="text-sm text-gray-500">Check Out: <span class="font-medium">{{ $attendance->check_out->format('h:i A') }}</span></p>
                                                 @endif
                                             </div>
                                             <div class="text-right text-sm whitespace-nowrap text-gray-500">
-                                                {{ $attendance->attendance_date->format('M d, Y') }}
+                                                {{ $attendance->attendance_date ? $attendance->attendance_date->format('M d, Y') : '-' }}
                                             </div>
                                         </div>
                                     </div>
@@ -282,14 +282,14 @@
                         </svg>
                         <span class="ml-3 text-sm font-medium text-gray-900">Edit Profile</span>
                     </a>
-                    <a href="#"
+                    <a href="{{ route('admin.reports.attendance', ['user' => $user->id]) }}"
                        class="flex items-center px-4 py-3 hover:bg-gray-50 rounded-lg transition group">
                         <svg class="w-5 h-5 text-gray-400 group-hover:text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M12 8v4l3 3m6-3a9 9 0 11-18 0 9 9 0 0118 0z"/>
                         </svg>
                         <span class="ml-3 text-sm font-medium text-gray-900">View Attendance History</span>
                     </a>
-                    <a href="#"
+                    <a href="{{ route('admin.schedules.create', ['user_id' => $user->id]) }}"
                        class="flex items-center px-4 py-3 hover:bg-gray-50 rounded-lg transition group">
                         <svg class="w-5 h-5 text-gray-400 group-hover:text-green-600" fill="none" stroke="currentColor" viewBox="0 0 24 24">
                             <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M8 7V3m8 4V3m-9 8h10M5 21h14a2 2 0 002-2V7a2 2 0 00-2-2H5a2 2 0 00-2 2v12a2 2 0 002 2z"/>

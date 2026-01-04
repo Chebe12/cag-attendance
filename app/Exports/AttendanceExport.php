@@ -77,15 +77,15 @@ class AttendanceExport implements FromCollection, WithHeadings, WithMapping, Wit
 
         return [
             $attendance->user->employee_no ?? '-',
-            $attendance->user->full_name ?? '-',
+            $attendance->user->name ?? '-',
             $attendance->user->department ?? '-',
             \Carbon\Carbon::parse($attendance->attendance_date)->format('Y-m-d'),
             $checkIn,
             $checkOut,
             ucfirst($attendance->status),
             $workDuration,
-            optional($attendance->schedule)->client->name ?? '-',
-            optional($attendance->schedule)->shift->name ?? '-',
+            $attendance->client->name ?? '-',
+            $attendance->shift->name ?? '-',
             $attendance->check_in_location ?? '-',
             $attendance->check_in_ip ?? '-',
             $attendance->notes ?? '-',

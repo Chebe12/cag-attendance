@@ -9,7 +9,10 @@ use App\Models\Client;
 use App\Models\Shift;
 use Illuminate\Http\Request;
 use Illuminate\Support\Facades\DB;
+use Illuminate\Support\Facades\Log;
 use Carbon\Carbon;
+use Maatwebsite\Excel\Facades\Excel;
+use Barryvdh\DomPDF\Facade\Pdf;
 
 class ScheduleController extends Controller
 {
@@ -28,12 +31,12 @@ class ScheduleController extends Controller
         // Search functionality
         if ($request->filled('search')) {
             $search = $request->search;
-            $query->where(function($q) use ($search) {
-                $q->whereHas('user', function($query) use ($search) {
+            $query->where(function ($q) use ($search) {
+                $q->whereHas('user', function ($query) use ($search) {
                     $query->where('firstname', 'like', '%' . $search . '%')
-                          ->orWhere('lastname', 'like', '%' . $search . '%')
-                          ->orWhere('employee_no', 'like', '%' . $search . '%');
-                })->orWhereHas('client', function($query) use ($search) {
+                        ->orWhere('lastname', 'like', '%' . $search . '%')
+                        ->orWhere('employee_no', 'like', '%' . $search . '%');
+                })->orWhereHas('client', function ($query) use ($search) {
                     $query->where('name', 'like', '%' . $search . '%');
                 });
             });
@@ -91,9 +94,9 @@ class ScheduleController extends Controller
 
         // Order by scheduled date and start time
         $schedules = $query->orderBy('scheduled_date', 'desc')
-                          ->orderBy('start_time')
-                          ->paginate(20)
-                          ->withQueryString();
+            ->orderBy('start_time')
+            ->paginate(20)
+            ->withQueryString();
 
         // Get data for filters
         $users = User::active()->orderBy('firstname')->get();
@@ -135,7 +138,7 @@ class ScheduleController extends Controller
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'client_id' => 'required|exists:clients,id',
-            'session_time' => 'required|in:morning,mid-morning,afternoon',
+            'session_time' => 'required|in:morning,afternoon',
             'shift_id' => 'nullable|exists:shifts,id',
             'is_recurring' => 'boolean',
             'category_id' => 'nullable|exists:schedule_categories,id|required_if:is_recurring,true',
@@ -286,7 +289,7 @@ class ScheduleController extends Controller
         $validated = $request->validate([
             'user_id' => 'required|exists:users,id',
             'client_id' => 'required|exists:clients,id',
-            'session_time' => 'required|in:morning,mid-morning,afternoon',
+            'session_time' => 'required|in:morning,afternoon',
             'shift_id' => 'nullable|exists:shifts,id',
             'is_recurring' => 'boolean',
             'category_id' => 'nullable|exists:schedule_categories,id|required_if:is_recurring,true',
@@ -395,7 +398,7 @@ class ScheduleController extends Controller
             ->get();
 
         // Format schedules for calendar
-        $calendarData = $schedules->map(function($schedule) {
+        $calendarData = $schedules->map(function ($schedule) {
             return [
                 'id' => $schedule->id,
                 'title' => $schedule->user->full_name . ' - ' . $schedule->client->name,
@@ -445,7 +448,7 @@ class ScheduleController extends Controller
             ->orderBy('start_time')
             ->get();
 
-        $events = $schedules->map(function($schedule) {
+        $events = $schedules->map(function ($schedule) {
             return [
                 'id' => $schedule->id,
                 'title' => $schedule->user->full_name . ' - ' . $schedule->client->name,
@@ -557,16 +560,16 @@ class ScheduleController extends Controller
         $query = Schedule::where('user_id', $userId)
             ->where('scheduled_date', $date)
             ->where('status', '!=', 'cancelled')
-            ->where(function($q) use ($startTime, $endTime) {
-                $q->where(function($query) use ($startTime, $endTime) {
+            ->where(function ($q) use ($startTime, $endTime) {
+                $q->where(function ($query) use ($startTime, $endTime) {
                     $query->where('start_time', '<=', $startTime)
-                          ->where('end_time', '>', $startTime);
-                })->orWhere(function($query) use ($startTime, $endTime) {
+                        ->where('end_time', '>', $startTime);
+                })->orWhere(function ($query) use ($startTime, $endTime) {
                     $query->where('start_time', '<', $endTime)
-                          ->where('end_time', '>=', $endTime);
-                })->orWhere(function($query) use ($startTime, $endTime) {
+                        ->where('end_time', '>=', $endTime);
+                })->orWhere(function ($query) use ($startTime, $endTime) {
                     $query->where('start_time', '>=', $startTime)
-                          ->where('end_time', '<=', $endTime);
+                        ->where('end_time', '<=', $endTime);
                 });
             });
 
@@ -652,15 +655,15 @@ class ScheduleController extends Controller
 
         // Order by date and time
         $schedules = $query->orderBy('scheduled_date', 'asc')
-                          ->orderBy('start_time', 'asc')
-                          ->get();
+            ->orderBy('start_time', 'asc')
+            ->get();
 
         // Get data for filters
         $users = User::active()->orderBy('firstname')->get();
         $clients = Client::active()->orderBy('name')->get();
 
         // Group schedules by date for better display
-        $groupedSchedules = $schedules->groupBy(function($schedule) {
+        $groupedSchedules = $schedules->groupBy(function ($schedule) {
             return $schedule->scheduled_date ? $schedule->scheduled_date->format('Y-m-d') : 'No Date';
         });
 
@@ -710,7 +713,7 @@ class ScheduleController extends Controller
 
         // Structure data by day and session
         $weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
-        $sessions = ['morning', 'mid-morning', 'afternoon'];
+        $sessions = ['morning', 'afternoon'];
 
         // Map day names to Carbon day constants (0=Sunday, 1=Monday, 2=Tuesday, etc.)
         $dayMapping = [
@@ -734,16 +737,16 @@ class ScheduleController extends Controller
 
             foreach ($sessions as $session) {
                 // Get recurring schedules for this day and session
-                $daySchedules = $recurringSchedules->filter(function($schedule) use ($day, $session) {
+                $daySchedules = $recurringSchedules->filter(function ($schedule) use ($day, $session) {
                     return $schedule->day_of_week === $day &&
-                           $schedule->session_time === $session;
+                        $schedule->session_time === $session;
                 });
 
                 // Add one-time schedules for this specific date and session
-                $oneTimeDaySchedules = $oneTimeSchedules->filter(function($schedule) use ($date, $session) {
+                $oneTimeDaySchedules = $oneTimeSchedules->filter(function ($schedule) use ($date, $session) {
                     return $schedule->scheduled_date &&
-                           $schedule->scheduled_date->isSameDay($date) &&
-                           $schedule->session_time === $session;
+                        $schedule->scheduled_date->isSameDay($date) &&
+                        $schedule->session_time === $session;
                 });
 
                 // Merge both recurring and one-time schedules
@@ -768,7 +771,7 @@ class ScheduleController extends Controller
 
         // Get all active instructors
         $instructorsQuery = User::where('status', 'active')
-            ->whereIn('user_type', ['instructor', 'office_staff'])
+            ->whereIn('user_type', ['instructor'])
             ->orderBy('firstname');
 
         if ($departmentId) {
@@ -787,7 +790,7 @@ class ScheduleController extends Controller
 
         // Define structure
         $weekDays = ['monday', 'tuesday', 'wednesday', 'thursday', 'friday'];
-        $sessions = ['morning', 'mid-morning', 'afternoon'];
+        $sessions = ['morning', 'afternoon'];
         $totalSlots = count($weekDays) * count($sessions); // 15 total slots
 
         // Get schedules based on filter
@@ -817,7 +820,7 @@ class ScheduleController extends Controller
             foreach ($weekDays as $day) {
                 $slotDetails[$day] = [];
                 foreach ($sessions as $session) {
-                    $schedule = $instructorSchedules->first(function($s) use ($day, $session) {
+                    $schedule = $instructorSchedules->first(function ($s) use ($day, $session) {
                         return $s->day_of_week === $day && $s->session_time === $session;
                     });
 
@@ -849,5 +852,102 @@ class ScheduleController extends Controller
             'weekDays',
             'sessions'
         ));
+    }
+
+    /**
+     * Export schedules data
+     *
+     * @param Request $request
+     * @return \Symfony\Component\HttpFoundation\BinaryFileResponse|\Illuminate\Http\Response
+     */
+    public function export(Request $request)
+    {
+        try {
+            // Validate the request
+            $validated = $request->validate([
+                'format' => 'required|in:excel,pdf,csv',
+                'search' => 'nullable|string',
+                'category_id' => 'nullable|exists:schedule_categories,id',
+                'user_id' => 'nullable|exists:users,id',
+                'client_id' => 'nullable|exists:clients,id',
+                'day_of_week' => 'nullable|in:monday,tuesday,wednesday,thursday,friday,saturday,sunday',
+                'session_time' => 'nullable|in:morning,afternoon',
+                'status' => 'nullable|in:scheduled,completed,cancelled',
+                'draft_status' => 'nullable|in:draft,published',
+            ]);
+
+            $format = $validated['format'];
+
+            // Build query with same filters as index
+            $query = Schedule::with(['user', 'client', 'shift', 'category']);
+
+            if ($request->filled('search')) {
+                $search = $request->search;
+                $query->where(function($q) use ($search) {
+                    $q->whereHas('user', function($q) use ($search) {
+                        $q->where('firstname', 'like', "%{$search}%")
+                          ->orWhere('lastname', 'like', "%{$search}%")
+                          ->orWhere('employee_no', 'like', "%{$search}%");
+                    })
+                    ->orWhereHas('client', function($q) use ($search) {
+                        $q->where('name', 'like', "%{$search}%");
+                    });
+                });
+            }
+
+            if ($request->filled('category_id')) {
+                $query->where('category_id', $request->category_id);
+            }
+
+            if ($request->filled('user_id')) {
+                $query->where('user_id', $request->user_id);
+            }
+
+            if ($request->filled('client_id')) {
+                $query->where('client_id', $request->client_id);
+            }
+
+            if ($request->filled('day_of_week')) {
+                $query->where('day_of_week', $request->day_of_week);
+            }
+
+            if ($request->filled('session_time')) {
+                $query->where('session_time', $request->session_time);
+            }
+
+            if ($request->filled('status')) {
+                $query->where('status', $request->status);
+            }
+
+            if ($request->filled('draft_status')) {
+                $query->where('draft_status', $request->draft_status);
+            }
+
+            $data = $query->orderBy('day_of_week')->orderBy('session_time')->get();
+
+            // Generate filename
+            $filename = 'schedules_report_' . now()->format('Y-m-d_His');
+
+            // Export based on format
+            if ($format === 'excel') {
+                return Excel::download(new \App\Exports\ScheduleExport($data), $filename . '.xlsx');
+            } elseif ($format === 'csv') {
+                return Excel::download(new \App\Exports\ScheduleExport($data), $filename . '.csv', \Maatwebsite\Excel\Excel::CSV);
+            } else {
+                $pdf = Pdf::loadView('admin.exports.pdf.schedules', [
+                    'data' => $data,
+                    'generated_at' => now()->format('Y-m-d H:i:s'),
+                ]);
+                return $pdf->download($filename . '.pdf');
+            }
+
+        } catch (\Exception $e) {
+            Log::error('Schedule Export Error: ' . $e->getMessage(), [
+                'request' => $request->all(),
+                'trace' => $e->getTraceAsString(),
+            ]);
+
+            return back()->with('error', 'An error occurred while exporting schedules. Please try again.');
+        }
     }
 }
